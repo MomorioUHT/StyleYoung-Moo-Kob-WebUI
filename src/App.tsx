@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Helmet } from "react-helmet";
 import "./MainPage.css";
 
 interface EmojiItem {
@@ -8,7 +9,7 @@ interface EmojiItem {
 
 function App() {
   const [activeTab, setActiveTab] = useState("login");
-  const [emojis, setEmojis] = useState<EmojiItem[]>([]); // <-- ระบุ type
+  const [emojis, setEmojis] = useState<EmojiItem[]>([]);
 
   useEffect(() => {
     const emojiList = ["🐷","🥓"];
@@ -29,6 +30,13 @@ function App() {
 
   return (
     <div className="body-container">
+      {/* Helmet ใช้เปลี่ยน tab title และ favicon */}
+      <Helmet>
+        <title>Styleyoung Moo Kob</title>
+        {/* ใช้ไฟล์ local จาก public */}
+        <link rel="icon" href="/logo11.png" type="image/png" />
+      </Helmet>
+
       {emojis.map((e, idx) => (
         <span key={idx} className="floating-emoji" style={e.style}>
           {e.emoji}
@@ -38,6 +46,7 @@ function App() {
       <div className="container">
         <h1 style={{ color: "#fff" }}>Styleyoung Moo Kob</h1>
         <h3 style={{ color: "#fff" }}>Yummy moo kob for u UwU</h3>
+
         <div className="tabs">
           <button
             className={activeTab === "login" ? "active" : ""}
