@@ -1,0 +1,169 @@
+/* Global */
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: linear-gradient(rgba(0,0,0,0.7), rgba(0,0,0,0.7)),
+  url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTh-2ubhlVv7sCjUb6geEMmwhNt46wKnv_leA&s') no-repeat center center fixed;
+  background-size: cover;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Glass Container */
+.container {
+  background: rgba(255, 255, 255, 0.35);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+  width: 320px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  z-index: 1; /* อยู่เหนือ emoji */
+}
+
+/* Tabs */
+.tabs {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tabs button {
+  width: 120px;
+  padding: 10px;
+  border: none;
+  background: rgba(255, 255, 255, 0.35); /* less transparent */
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 10px;
+  transition: 0.3s;
+  color: #fff;
+  backdrop-filter: blur(5px);
+}
+
+.tabs button.active {
+  background: rgba(255, 255, 255, 0.5); /* less transparent */
+  box-shadow: inset 2px 2px 5px rgba(255, 255, 255, 0.4),
+              inset -2px -2px 5px rgba(255, 255, 255, 0.4);
+}
+
+/* Forms */
+.form {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form.active {
+  display: flex;
+}
+
+/* Inputs */
+input {
+  width: 250px;
+  margin: 10px 0;
+  padding: 12px;
+  border-radius: 10px;
+  border: none;
+  background: rgba(255, 255, 255, 0.35); /* less transparent */
+  box-shadow: inset 4px 4px 6px rgba(255, 255, 255, 0.35),
+              inset -4px -4px 6px rgba(255, 255, 255, 0.25);
+  color: #fff;
+  backdrop-filter: blur(5px);
+}
+
+/* Buttons */
+.btn {
+  width: 250px;
+  margin-top: 10px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.35); /* less transparent */
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #fff;
+  box-shadow: 6px 6px 10px rgba(0,0,0,0.25),
+              -6px -6px 10px rgba(255,255,255,0.15);
+  transition: 0.3s;
+  backdrop-filter: blur(5px);
+}
+
+.btn:hover {
+  background: rgba(255, 255, 255, 0.45); /* slightly stronger hover */
+}
+
+/* Divider text */
+.or {
+  text-align: center;
+  margin: 15px 0 10px;
+  font-size: 0.85em;
+  color: #eee;
+}
+
+/* Socials */
+.socials {
+  display: flex;
+  justify-content: space-around;
+  width: 250px;
+}
+
+.social {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.35); /* less transparent */
+  box-shadow: 6px 6px 10px rgba(0,0,0,0.25),
+              -6px -6px 10px rgba(255,255,255,0.15);
+  font-size: 1.2em;
+  cursor: pointer;
+  color: #fff;
+  backdrop-filter: blur(5px);
+}
+
+/* Body container เพื่อรองรับ emoji */
+.body-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  /* Background image ด้านล่างสุด */
+  background: url('https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlttbCzY0j6myWoHSooAJcf1aMvPzIHRL6rg&s') no-repeat center center fixed;
+  background-size: cover;
+}
+
+/* Floating emoji */
+.floating-emoji {
+  position: absolute;
+  top: 100vh;
+  animation-name: floatUp;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  z-index: 0; /* อยู่ล่างสุด */
+}
+
+@keyframes floatUp {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-120vh);
+    opacity: 0;
+  }
+}
