@@ -33,7 +33,6 @@ function App() {
       {/* Helmet ใช้เปลี่ยน tab title และ favicon */}
       <Helmet>
         <title>Styleyoung Moo Kob</title>
-        {/* ใช้ไฟล์ local จาก public */}
         <link rel="icon" href="/logo11.png" type="image/png" />
       </Helmet>
 
@@ -63,14 +62,14 @@ function App() {
         </div>
 
         <form className={`form ${activeTab === "login" ? "active" : ""}`}>
-          <input type="email" placeholder="Email" />
+          <input type="username" placeholder="Username" />
           <input type="password" placeholder="Password" required />
           <button type="submit" className="btn">Login</button>
         </form>
 
         <form className={`form ${activeTab === "register" ? "active" : ""}`}>
           <input type="text" placeholder="Full Name" required />
-          <input type="email" placeholder="Email" required />
+          <input type="username" placeholder="Username" required />
           <input type="password" placeholder="Password" required />
           <input type="password" placeholder="Confirm Password" required />
           <button type="submit" className="btn">Register</button>
