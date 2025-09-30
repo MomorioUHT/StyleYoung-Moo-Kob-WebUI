@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
-import { Helmet } from "react-helmet";
-import "./MainPage.css";
+import "./LoginRegisterPage.css";
 
 interface EmojiItem {
   emoji: string;
@@ -30,11 +29,6 @@ function App() {
 
   return (
     <div className="body-container">
-      {/* Helmet ใช้เปลี่ยน tab title และ favicon */}
-      <Helmet>
-        <title>Styleyoung Moo Kob</title>
-        <link rel="icon" href="/logo11.png" type="image/png" />
-      </Helmet>
 
       {emojis.map((e, idx) => (
         <span key={idx} className="floating-emoji" style={e.style}>
@@ -44,7 +38,6 @@ function App() {
 
       <div className="container">
         <h1 style={{ color: "#fff" }}>Styleyoung Moo Kob</h1>
-        <h3 style={{ color: "#fff" }}>Yummy moo kob for u UwU</h3>
 
         <div className="tabs">
           <button
