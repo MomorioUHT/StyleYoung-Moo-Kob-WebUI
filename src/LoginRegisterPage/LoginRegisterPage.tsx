@@ -187,29 +187,6 @@ function App() {
             เข้าสู่ระบบพนักงาน
           </button>
         </div>
-
-        {/* <form className={`form ${activeTab === "login" ? "active" : ""}`} onSubmit={handleLogin}>
-          <input type="username" placeholder="ชื่อผู้ใช้" />
-          <input type="password" placeholder="รหัสผ่าน" required />
-          <button type="submit" className="btn">เข้าสู่ระบบ</button>
-        </form>
-
-        <form className={`form ${activeTab === "register" ? "active" : ""}`} onSubmit={handleRegister}>
-          <input type="text" placeholder="ชื่อ" required />
-          <input type="text" placeholder="นามสกุล" required />
-          <input type="text" placeholder="เบอร์โทรศัพท์" required />
-          <input type="text" placeholder="ที่อยู่" required />
-          <input type="username" placeholder="ชื่อผู้ใช้" required />
-          <input type="password" placeholder="รหัสผ่าน" required />
-          <input type="password" placeholder="ยืนยันรหัสผ่าน" required />
-          <button type="submit" className="btn">ลงทะเบียนผู้ใช้งาน</button>
-        </form>
-
-        <form className={`form ${activeTab === "staffLogin" ? "active" : ""}`} onSubmit={handleStaffLogin}>
-          <input type="username" placeholder="ชื่อผู้ใช้พนักงาน" required />
-          <input type="password" placeholder="รหัสผ่าน" required />
-          <button type="submit" className="btn">เข้าสู่ระบบพนักงาน</button>
-        </form> */}
         
         {/* Login Form */}
         <form className={`form ${activeTab === "login" ? "active" : ""}`} onSubmit={handleLogin}>
