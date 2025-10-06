@@ -19,7 +19,7 @@ function LoginRegister() {
 
     const [activeTab, setActiveTab] = useState("login");
     const [emojis, setEmojis] = useState<EmojiItem[]>([]);
-    
+
     // Verifier User
     const verifyUser = async () => {
         const token = localStorage.getItem("token");
@@ -33,19 +33,19 @@ function LoginRegister() {
                 },
             });
 
-            if (!res.data.s_position) {
+            if (!res.data.user.s_position) {
                 navigate("/home")
             } else {
-                if (res.data.s_position === "Admin") {
-                    navigate("/AdminDashboard")
-                } else if (res.data.s_position === "Warehouse") {
-                    navigate("/Warehouse")
-                } else if (res.data.s_position === "QC") {
-                    navigate("/QC")         
-                } else if (res.data.s_position === "Production") {
-                    navigate("/Production")
-                } else if (res.data.s_position === "Sales") {
-                    navigate("/Sales")          
+                if (res.data.user.s_position === "Admin") {
+                    navigate("/administrator")
+                } else if (res.data.user.s_position === "Warehouse") {
+                    navigate("/warehouse")
+                } else if (res.data.user.s_position === "QC") {
+                    navigate("/qc")         
+                } else if (res.data.user.s_position === "Production") {
+                    navigate("/production")
+                } else if (res.data.user.s_position === "Sales") {
+                    navigate("/sales")          
                 } else {
                     errorNotification("Page missing", "หน้าที่ร้องขอไม่พบในระบบ")
                 }
@@ -56,7 +56,7 @@ function LoginRegister() {
     };
 
     // User Login
-    const handleLogin = async (e: React.FormEvent) => {
+    const customerLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         const username = (e.target as any)[0].value;
         const password = (e.target as any)[1].value;
@@ -81,14 +81,14 @@ function LoginRegister() {
                 localStorage.setItem("token", data.token);
                 setTimeout(() => verifyUser(), 1000);
             } else {
-                errorNotification("เข้าสู่ระบบไม่สำเร็จ", data.message);
+                errorNotification("ไม่สามารถเข้าสู่ระบบได้","username หรือ password ไม่ถูกต้อง");
             }
         } catch (err: any) {
-            errorNotification("เกิดข้อผิดพลาด", err.message);
+            errorNotification("ไม่สามารถเข้าสู่ระบบได้","username หรือ password ไม่ถูกต้อง");
         }
     };
 
-    const handleStaffLogin = async (e: React.FormEvent) => {
+    const staffLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         const username = (e.target as any)[0].value;
         const password = (e.target as any)[1].value;
@@ -114,15 +114,15 @@ function LoginRegister() {
                 localStorage.setItem("token", data.token);
                 setTimeout(() => verifyUser(), 1000);
             } else {
-                errorNotification("เข้าสู่ระบบพนักงานไม่สำเร็จ", data.message);
+                errorNotification("ไม่สามารถเข้าสู่ระบบได้","username หรือ password ไม่ถูกต้อง");
             }
         } catch (err: any) {
-            errorNotification("เกิดข้อผิดพลาด", err.message);
+            errorNotification("ไม่สามารถเข้าสู่ระบบได้","username หรือ password ไม่ถูกต้อง");
         }
     };
 
     // Register Customer
-    const handleRegister = async (e: React.FormEvent) => {
+    const customerRegister = async (e: React.FormEvent) => {
         e.preventDefault();
 
         const [
@@ -171,6 +171,8 @@ function LoginRegister() {
     };
 
     useEffect(() => {
+        verifyUser();
+
         const emojiList = ["🐷", "🥓"];
         const tempEmojis: EmojiItem[] = [];
 
@@ -216,7 +218,7 @@ function LoginRegister() {
                 </div>
 
                 {/* Login Form */}
-                <form className={`form ${activeTab === "login" ? "active" : ""}`} onSubmit={handleLogin}>
+                <form className={`form ${activeTab === "login" ? "active" : ""}`} onSubmit={customerLogin}>
                     <label>ชื่อผู้ใช้</label>
                     <input type="username" placeholder="ชื่อผู้ใช้" />
 
@@ -227,7 +229,7 @@ function LoginRegister() {
                 </form>
 
                 {/* Register Form */}
-                <form className={`form ${activeTab === "register" ? "active" : ""}`} onSubmit={handleRegister}>
+                <form className={`form ${activeTab === "register" ? "active" : ""}`} onSubmit={customerRegister}>
                     <label>ชื่อ</label>
                     <input type="text" placeholder="ชื่อ" required />
 
@@ -253,7 +255,7 @@ function LoginRegister() {
                 </form>
 
                 {/* Staff Login Form */}
-                <form className={`form ${activeTab === "staffLogin" ? "active" : ""}`} onSubmit={handleStaffLogin}>
+                <form className={`form ${activeTab === "staffLogin" ? "active" : ""}`} onSubmit={staffLogin}>
                     <label>ชื่อผู้ใช้พนักงาน</label>
                     <input type="username" placeholder="ชื่อผู้ใช้พนักงาน" required />
 

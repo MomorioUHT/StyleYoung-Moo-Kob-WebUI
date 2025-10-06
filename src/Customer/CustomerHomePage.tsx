@@ -1,77 +1,47 @@
-import React from 'react';
+import { useState, useEffect } from "react";
+import api from "../middleware/axios";
+import { useNavigate } from "react-router-dom";
+import { notification } from "antd";
+import { 
+    errorNotification, 
+    warningNotification, 
+    successNotification 
+} from "../middleware/displayer";
 
-import { LaptopOutlined, NotificationOutlined, UserOutlined } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-import { Breadcrumb, Layout, Menu, theme } from 'antd';
+function AdminDashboard() {
+    const navigate = useNavigate();
+    const API_KEY = process.env.REACT_APP_API_KEY;
 
-const { Header, Content, Footer, Sider } = Layout;
+    // Verifier User
+    const verifyUser = async () => {
+        const token = localStorage.getItem("token");
 
-const items1: MenuProps['items'] = ['1', '2', '3'].map((key) => ({
-    key,
-    label: `nav ${key}`,
-}));
+        try {
+            const res = await api.get("/verifyUser", {
+                headers: {
+                    'api-key': API_KEY,
+                    Authorization: `Bearer ${token}` 
+                },
+            });
 
-const items2: MenuProps['items'] = [UserOutlined, LaptopOutlined, NotificationOutlined].map(
-    (icon, index) => {
-        const key = String(index + 1);
+            if (!res.data.user) {
+                navigate("/welcome")
+            }
+        } catch {
+            errorNotification("การตรวจสอบสิทธิ์ล้มเหลว", "กรุณาเข้าสู่ระบบอีกครั้ง")
+            navigate('/welcome')
+        }
+    };
 
-        return {
-            key: `sub${key}`,
-            icon: React.createElement(icon),
-            label: `subnav ${key}`,
-            children: Array.from({ length: 4 }).map((_, j) => {
-                const subKey = index * 4 + j + 1;
-                return {
-                    key: subKey,
-                    label: `option${subKey}`,
-                };
-            }),
-        };
-    },
-);
-
-const App: React.FC = () => {
-    const {
-        token: { colorBgContainer, borderRadiusLG },
-    } = theme.useToken();
+    useEffect(() => {
+        verifyUser();
+    }, []);
 
     return (
-        <Layout style={{ minHeight: '100vh', width: '100vw' }}>
-            <Header style={{ display: 'flex', alignItems: 'center' }}>
-                <div className="demo-logo" />
-                <Menu
-                    theme="dark"
-                    mode="horizontal"
-                    defaultSelectedKeys={['2']}
-                    items={items1}
-                    style={{ flex: 1, minWidth: 0 }}
-                />
-            </Header>
-            <div style={{ padding: '0 48px' }}>
-                <Breadcrumb
-                    style={{ margin: '16px 0' }}
-                    items={[{ title: 'Home' }, { title: 'List' }, { title: 'App' }]}
-                />
-                <Layout
-                    style={{ padding: '24px 0', background: colorBgContainer, borderRadius: borderRadiusLG }}
-                >
-                    <Sider style={{ background: colorBgContainer }} width={200}>
-                        <Menu
-                            mode="inline"
-                            defaultSelectedKeys={['1']}
-                            defaultOpenKeys={['sub1']}
-                            style={{ height: '100%' }}
-                            items={items2}
-                        />
-                    </Sider>
-                    <Content style={{ padding: '0 24px', minHeight: 280 }}>Content</Content>
-                </Layout>
-            </div>
-            <Footer style={{ textAlign: 'center' }}>
-                Ant Design ©{new Date().getFullYear()} Created by Ant UED
-            </Footer>
-        </Layout>
+        <div className="body-container">
+            <p>CUSTOMER HOME TEST PAGE</p>
+        </div>
     );
-};
+}
 
-export default App;
+export default AdminDashboard;

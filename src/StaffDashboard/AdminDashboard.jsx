@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../middleware/axios";
 import { useNavigate } from "react-router-dom";
 import { notification } from "antd";
 import { 
@@ -8,36 +8,38 @@ import {
     successNotification 
 } from "../middleware/displayer";
 
-
 function AdminDashboard() {
     const navigate = useNavigate();
+    const API_KEY = process.env.REACT_APP_API_KEY;
 
     // Verifier User
     const verifyUser = async () => {
         const token = localStorage.getItem("token");
-        if (!token) return;
 
         try {
-            const res = await axios.get("/verifyMe", {
-                headers: { Authorization: `Bearer ${token}` },
+            const res = await api.get("/verifyUser", {
+                headers: {
+                    'api-key': API_KEY,
+                    Authorization: `Bearer ${token}` 
+                },
             });
 
-            const { role } = res.data;
-            if (role === "User") {
-                navigate("/Home");
-            } else if (role === "Admin") {
-                navigate("/Dashboard");
-            } else {
-                notification.info({ message: "Unknown role" });
+            if (!res.data.user.s_position) {
+                navigate("/welcome")
             }
         } catch {
             errorNotification("การตรวจสอบสิทธิ์ล้มเหลว", "กรุณาเข้าสู่ระบบอีกครั้ง")
+            navigate('/welcome')
         }
     };
 
+    useEffect(() => {
+        verifyUser();
+    }, []);
+
     return (
         <div className="body-container">
-            <p1>STAFF TEST PAGE</p1>
+            <p>ADMINISTRATOR TEST PAGE</p>
         </div>
     );
 }
