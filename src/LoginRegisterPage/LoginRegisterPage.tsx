@@ -37,15 +37,15 @@ function LoginRegister() {
                 navigate("/home")
             } else {
                 if (res.data.user.s_position === "Admin") {
-                    navigate("/administrator")
+                    navigate("/administrator/dashboard")
                 } else if (res.data.user.s_position === "Warehouse") {
-                    navigate("/warehouse")
+                    navigate("/warehouse/dashboard")
                 } else if (res.data.user.s_position === "QC") {
-                    navigate("/qc")         
+                    navigate("/qc/dashboard")         
                 } else if (res.data.user.s_position === "Production") {
-                    navigate("/production")
+                    navigate("/production/dashboard")
                 } else if (res.data.user.s_position === "Sales") {
-                    navigate("/sales")          
+                    navigate("/sales/dashboard")          
                 } else {
                     errorNotification("Page missing", "หน้าที่ร้องขอไม่พบในระบบ")
                 }
