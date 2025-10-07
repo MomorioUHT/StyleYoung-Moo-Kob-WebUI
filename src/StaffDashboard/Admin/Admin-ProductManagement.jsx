@@ -8,7 +8,7 @@ import {
     infoNotification
 } from "../../middleware/displayer";
 
-import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space} from "antd";
+import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Table, Button, Modal, Form, Input } from "antd";
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
@@ -21,7 +21,8 @@ import {
     TruckOutlined,
     ReadOutlined,
     ShoppingCartOutlined,
-    ProductOutlined
+    ProductOutlined,
+    PlusSquareOutlined
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
@@ -32,9 +33,22 @@ function AdminProductManagement() {
     const [collapsed, setCollapsed] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
 
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(false);
+    
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [form] = Form.useForm();
+
     const {
         token: { colorBgContainer },
     } = theme.useToken();
+
+    // Modal Handlers
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => {
+        setIsModalOpen(false);
+        form.resetFields();
+    };
 
     // Verifier User
     const verifyUser = async () => {
@@ -59,8 +73,28 @@ function AdminProductManagement() {
         }
     };
 
+    // Fetch Products
+    const fetchProducts = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const res = await api.get("/productsFull", {
+                headers: {
+                    'api-key': API_KEY,
+                    Authorization: `Bearer ${token}`
+                },
+            });
+            setProducts(res.data);
+        } catch (err) {
+            errorNotification("โหลดข้อมูลผลิตภัณฑ์ล้มเหลว", "กรุณาลองใหม่อีกครั้ง");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         verifyUser();
+        fetchProducts();
     }, []);
 
     const handleMenuClick = (e) => {
@@ -69,6 +103,57 @@ function AdminProductManagement() {
             window.location.reload();
         } else {
             navigate(`/administrator/${e.key}`);
+        }
+    };
+
+    // Add Product function
+    const addProduct = async () => {
+        try {
+            const values = await form.validateFields();
+            const token = localStorage.getItem("token");
+
+
+            const price = Number(values.product_price);
+            const weight = Number(values.product_weight);
+
+            if (isNaN(price) || isNaN(weight)) {
+                warningNotification("ข้อมูลไม่ถูกต้อง", "กรุณากรอกราคาและน้ำหนักให้เป็นตัวเลข");
+                return;
+            }
+
+            if (price <= 0 || weight <= 0) {
+                warningNotification("ข้อมูลไม่ถูกต้อง", "ราคาหรือน้ำหนักต้องมากกว่า 0");
+                return;
+            }
+
+            const payload = {
+                product_name: values.product_name,
+                product_price: price,
+                product_weight: weight
+            };
+
+            const res = await api.post("/registerProduct", payload, {
+                headers: {
+                    'api-key': API_KEY,
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (res.status === 201) {
+                successNotification("เพิ่มสินค้าสำเร็จ", res.data.message);
+                fetchProducts();
+                closeModal();
+            }
+        } catch (err) {
+            if (err.response) {
+                if (err.response.status === 409) {
+                    warningNotification("เพิ่มสินค้าล้มเหลว", err.response.data.message);
+                } else if (err.response.status === 500) {
+                    errorNotification("เกิดข้อผิดพลาด", err.response.data.message);
+                }
+            } else {
+                errorNotification("เกิดข้อผิดพลาด", "กรุณาตรวจสอบข้อมูลอีกครั้งหรือลองใหม่");
+            }
         }
     };
 
@@ -85,6 +170,16 @@ function AdminProductManagement() {
 
     const userMenuItems = [
         { key: "logout", icon: <LogoutOutlined />, label: "Logout" },
+    ];
+
+    // Products Table
+    const columns = [
+        { title: "ID", dataIndex: "p_id", key: "p_id" },
+        { title: "ชื่อสินค้า", dataIndex: "p_name", key: "p_name" },
+        { title: "เกรดของสินค้า", dataIndex: "p_grade", key: "p_grade" },
+        { title: "น้ำหนัก (กิโลกรัม)", dataIndex: "p_weight", key: "p_weight" },
+        { title: "ปริมาณที่มี (หน่วย)", dataIndex: "p_quantity", key: "p_quantity" },
+        { title: "ราคาต่อหน่วย", dataIndex: "p_price", key: "p_price" }
     ];
 
     return (
@@ -219,9 +314,42 @@ function AdminProductManagement() {
                     </Breadcrumb>
 
                     <h2> <ShoppingCartOutlined /> ข้อมูลสินค้าในระบบ</h2>
+
+                    <Space style={{ marginBottom: 16 }}>
+                        <Button type="primary" onClick={openModal}><PlusSquareOutlined /> เพิ่มสินค้า</Button>
+                    </Space>
+
                     <p>
-                        PRODUCT TABLE
+                        <Table
+                            columns={columns}
+                            dataSource={products}
+                            rowKey="i_id"
+                            loading={loading}
+                            pagination={{ pageSize: 10 }}
+                        />
                     </p>
+
+                    {/* Modal */}
+                    <Modal
+                        title="เพิ่มสินค้า"
+                        open={isModalOpen}
+                        onOk={addProduct}
+                        onCancel={closeModal}
+                        okText="บันทึก"
+                        cancelText="ยกเลิก"
+                    >
+                        <Form form={form} layout="vertical">
+                            <Form.Item name="product_name" label="ชื่อสินค้า" rules={[{ required: true, message: 'กรุณากรอกชื่อสินค้า' }]}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item name="product_price" label="ราคาของสินค้า" rules={[{ required: true, message: 'กรุณากรอกราคาสินค้า' }]}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item name="product_weight" label="น้ำหนักของสินค้า (กิโลกรัม)" rules={[{ required: true, message: 'กรุณากรอกน้ำหนักสินค้า' }]}>
+                                <Input />
+                            </Form.Item>
+                        </Form>
+                    </Modal>
                 </Content>
             </Layout>
         </Layout>

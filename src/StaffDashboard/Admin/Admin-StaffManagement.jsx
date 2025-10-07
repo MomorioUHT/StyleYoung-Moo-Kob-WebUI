@@ -4,8 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { 
     errorNotification, 
     warningNotification, 
-    successNotification, 
-    infoNotification
+    successNotification
 } from "../../middleware/displayer";
 
 import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Table, Button, Modal, Form, Input, Select } from "antd";
@@ -93,19 +92,37 @@ function AdminStaffManagement() {
         }
     };
 
-    // Add stuff function
-    const handleAddStaff = async () => {
+    // Add staff function
+    const addStaff = async () => {
         try {
             const values = await form.validateFields();
             const token = localStorage.getItem("token");
 
+            const { firstname, lastname, phone, position, username, password } = values;
+
+            if (username.length < 5 || username.length > 15) {
+                warningNotification("ข้อมูลไม่ถูกต้อง", "ชื่อผู้ใช้ต้องมีความยาวระหว่าง 5 ถึง 15 ตัวอักษร");
+                return;
+            }
+
+            const phonePattern = /^[0-9]{10}$/;
+            if (!phonePattern.test(phone)) {
+                warningNotification("ข้อมูลไม่ถูกต้อง", "หมายเลขโทรศัพท์ต้องเป็นตัวเลข 10 หลัก");
+                return;
+            }
+
+            if (password.length < 7 || password.length > 20) {
+                warningNotification("ข้อมูลไม่ถูกต้อง", "รหัสผ่านต้องมีความยาวระหว่าง 7 ถึง 20 ตัวอักษร");
+                return;
+            }
+
             const payload = {
-                firstname: values.firstname,
-                lastname: values.lastname,
-                phone: values.phone,
-                position: values.position,
-                username: values.username,
-                password: values.password,
+                firstname,
+                lastname,
+                phone,
+                position,
+                username,
+                password,
             };
 
             const res = await api.post("/registerStaff", payload, {
@@ -128,7 +145,7 @@ function AdminStaffManagement() {
                     errorNotification("เกิดข้อผิดพลาด", err.response.data.message);
                 }
             } else {
-                errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถเชื่อมต่อ server ได้");
+                errorNotification("เกิดข้อผิดพลาด", "กรุณาตรวจสอบข้อมูลอีกครั้งหรือลองใหม่");
             }
         }
     };
@@ -336,7 +353,7 @@ function AdminStaffManagement() {
                     <Modal
                         title="เพิ่มพนักงานใหม่"
                         open={isModalOpen}
-                        onOk={handleAddStaff}
+                        onOk={addStaff}
                         onCancel={closeModal}
                         okText="บันทึก"
                         cancelText="ยกเลิก"
@@ -353,10 +370,10 @@ function AdminStaffManagement() {
                             </Form.Item>
                             <Form.Item name="position" label="ตำแหน่งของพนักงาน" rules={[{ required: true, message: 'กรุณาเลือกตำแหน่ง' }]}>
                                 <Select placeholder="เลือกตำแหน่ง">
-                                    <Option value="QC">QC</Option>
-                                    <Option value="Warehouse">Warehouse</Option>
-                                    <Option value="Production">Production</Option>
-                                    <Option value="Sales">Sales</Option>
+                                    <Option value="QC">QC (ฝ่ายตรวจสอบคุณภาพ)</Option>
+                                    <Option value="Warehouse">Warehouse (ฝ่ายการคลัง)</Option>
+                                    <Option value="Production">Production (ฝ่ายผลิต)</Option>
+                                    <Option value="Sales">Sales (ฝ่ายขาย)</Option>
                                 </Select>
                             </Form.Item>
                             <Form.Item name="username" label="ชื่อผู้ใช้ของพนักงาน" rules={[{ required: true, message: 'กรุณากรอก username' }]}>

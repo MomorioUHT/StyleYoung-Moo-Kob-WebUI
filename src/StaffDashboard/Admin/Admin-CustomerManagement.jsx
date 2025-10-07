@@ -2,10 +2,7 @@ import { useState, useEffect } from "react";
 import api from "../../middleware/axios";
 import { useNavigate } from "react-router-dom";
 import { 
-    errorNotification, 
-    warningNotification, 
-    successNotification, 
-    infoNotification
+    errorNotification
 } from "../../middleware/displayer";
 
 import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Table} from "antd";
@@ -75,7 +72,7 @@ function AdminCustomerManagement() {
             });
             setCustomers(res.data);
         } catch (err) {
-            errorNotification("โหลดข้อมูลพนักงานล้มเหลว", "กรุณาลองใหม่อีกครั้ง");
+            errorNotification("โหลดข้อมูลลูกค้าล้มเหลว", "กรุณาลองใหม่อีกครั้ง");
         } finally {
             setLoading(false);
         }

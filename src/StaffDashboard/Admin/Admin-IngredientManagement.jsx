@@ -4,11 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { 
     errorNotification, 
     warningNotification, 
-    successNotification, 
-    infoNotification
+    successNotification
 } from "../../middleware/displayer";
 
-import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space} from "antd";
+import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Table, Button, Modal, Form, Input } from "antd";
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
@@ -21,7 +20,8 @@ import {
     TruckOutlined,
     ReadOutlined,
     ShoppingCartOutlined,
-    ProductOutlined
+    ProductOutlined,
+    PlusSquareOutlined
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
@@ -32,9 +32,23 @@ function AdminIngredientManagement() {
     const [collapsed, setCollapsed] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
 
+    const [ingredients, setIngredients] = useState([]);
+    const [loading, setLoading] = useState(false);
+    
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [form] = Form.useForm();
+
     const {
         token: { colorBgContainer },
     } = theme.useToken();
+
+    // Modal Handlers
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => {
+        setIsModalOpen(false);
+        form.resetFields();
+    };
+
 
     // Verifier User
     const verifyUser = async () => {
@@ -59,8 +73,28 @@ function AdminIngredientManagement() {
         }
     };
 
+    // Fetch Ingredients
+    const fetchIngredients = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const res = await api.get("/ingredients", {
+                headers: {
+                    'api-key': API_KEY,
+                    Authorization: `Bearer ${token}`
+                },
+            });
+            setIngredients(res.data);
+        } catch (err) {
+            errorNotification("โหลดข้อมูลวัตถุดิบล้มเหลว", "กรุณาลองใหม่อีกครั้ง");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         verifyUser();
+        fetchIngredients();
     }, []);
 
     const handleMenuClick = (e) => {
@@ -69,6 +103,41 @@ function AdminIngredientManagement() {
             window.location.reload();
         } else {
             navigate(`/administrator/${e.key}`);
+        }
+    };
+
+    // Add Ingredient function
+    const addIngredient = async () => {
+        try {
+            const values = await form.validateFields();
+            const token = localStorage.getItem("token");
+
+            const payload = {
+                ingredient_name: values.ingredient_name,
+            };
+
+            const res = await api.post("/registerIngredient", payload, {
+                headers: {
+                    'api-key': API_KEY,
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (res.status === 201) {
+                successNotification("เพิ่มประเภทวัตถุดิบสำเร็จ", res.data.message);
+                fetchIngredients();
+                closeModal();
+            }
+        } catch (err) {
+            if (err.response) {
+                if (err.response.status === 409) {
+                    warningNotification("เพิ่มประเภทวัตถุดิบล้มเหลว", err.response.data.message);
+                } else if (err.response.status === 500) {
+                    errorNotification("เกิดข้อผิดพลาด", err.response.data.message);
+                }
+            } else {
+                errorNotification("เกิดข้อผิดพลาด", "กรุณาตรวจสอบข้อมูลอีกครั้งหรือลองใหม่");
+            }
         }
     };
 
@@ -85,6 +154,13 @@ function AdminIngredientManagement() {
 
     const userMenuItems = [
         { key: "logout", icon: <LogoutOutlined />, label: "Logout" },
+    ];
+
+    // Ingredient Table
+    const columns = [
+        { title: "ID", dataIndex: "i_id", key: "i_id" },
+        { title: "ชื่อวัตถุดิบ", dataIndex: "i_name", key: "i_name" },
+        { title: "ปริมาณที่มี (หน่วย)", dataIndex: "i_amount", key: "i_amount" }
     ];
 
     return (
@@ -219,9 +295,36 @@ function AdminIngredientManagement() {
                     </Breadcrumb>
 
                     <h2> <ProductOutlined /> ข้อมูลวัตถุดิบในระบบ</h2>
+
+                    <Space style={{ marginBottom: 16 }}>
+                        <Button type="primary" onClick={openModal}><PlusSquareOutlined /> เพิ่มประเภทวัตถุดิบ</Button>
+                    </Space>
+
                     <p>
-                        INGREDIENT TABLE
+                        <Table
+                            columns={columns}
+                            dataSource={ingredients}
+                            rowKey="i_id"
+                            loading={loading}
+                            pagination={{ pageSize: 10 }}
+                        />
                     </p>
+
+                    {/* Modal */}
+                    <Modal
+                        title="เพิ่มพนักงานใหม่"
+                        open={isModalOpen}
+                        onOk={addIngredient}
+                        onCancel={closeModal}
+                        okText="บันทึก"
+                        cancelText="ยกเลิก"
+                    >
+                        <Form form={form} layout="vertical">
+                            <Form.Item name="ingredient_name" label="ชื่อวัตถุดิบ" rules={[{ required: true, message: 'กรุณากรอกชื่อวัตถุดิบ' }]}>
+                                <Input />
+                            </Form.Item>
+                        </Form>
+                    </Modal>
                 </Content>
             </Layout>
         </Layout>

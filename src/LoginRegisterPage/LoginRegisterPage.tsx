@@ -140,7 +140,10 @@ function LoginRegister() {
             return;
         }
 
-        if (password.value !== confirmPassword.value) {
+        if (password.length < 7 || password.length > 20) {
+            warningNotification("ข้อมูลไม่ถูกต้อง", "รหัสผ่านต้องมีความยาวระหว่าง 7 ถึง 20 ตัวอักษร");
+            return;
+        } else if (password.value !== confirmPassword.value) {
             warningNotification("รหัสผ่านไม่ตรงกัน", "กรุณาตรวจสอบอีกครั้ง");
             return;
         }
