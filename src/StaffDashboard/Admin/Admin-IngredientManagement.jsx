@@ -312,7 +312,7 @@ function AdminIngredientManagement() {
 
                     {/* Modal */}
                     <Modal
-                        title="เพิ่มพนักงานใหม่"
+                        title="เพิ่มประเภทวัตถุดิบใหม่"
                         open={isModalOpen}
                         onOk={addIngredient}
                         onCancel={closeModal}
