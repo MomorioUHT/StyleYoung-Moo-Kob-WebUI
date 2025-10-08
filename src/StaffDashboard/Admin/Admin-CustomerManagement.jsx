@@ -5,7 +5,7 @@ import {
     errorNotification
 } from "../../middleware/displayer";
 
-import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Table} from "antd";
+import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Table, Input } from "antd";
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
@@ -31,6 +31,7 @@ function AdminCustomerManagement() {
 
     const [customers, setCustomers] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [searchText, setSearchText] = useState("");
 
     const {
         token: { colorBgContainer },
@@ -262,15 +263,30 @@ function AdminCustomerManagement() {
                     </Breadcrumb>
 
                     <h2> <ClusterOutlined /> ข้อมูลลูกค้าในระบบ</h2>
-                    <p>
-                        <Table
-                            columns={columns}
-                            dataSource={customers}
-                            rowKey="c_id"
-                            loading={loading}
-                            pagination={{ pageSize: 10 }}
-                        />
-                    </p>
+
+                    <Input.Search
+                        placeholder="ค้นหาลูกค้า"
+                        allowClear
+                        enterButton="ค้นหา"
+                        size="middle"
+                        style={{ maxWidth: 350, marginBottom: 20 }}
+                        onSearch={(value) => setSearchText(value)}
+                        onChange={(e) => setSearchText(e.target.value)}
+                    />
+
+                    <Table
+                        columns={columns}
+                        dataSource={customers.filter((item) => {
+                            if (!searchText) return true;
+                            const lower = searchText.toLowerCase();
+                            return Object.values(item).some((val) =>
+                                String(val).toLowerCase().includes(lower)
+                            );
+                        })}
+                        rowKey="c_id"
+                        loading={loading}
+                        pagination={{ pageSize: 10 }}
+                    />
                 </Content>
             </Layout>
         </Layout>

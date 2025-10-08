@@ -34,6 +34,7 @@ function AdminIngredientManagement() {
 
     const [ingredients, setIngredients] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [searchText, setSearchText] = useState("");
     
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
@@ -296,19 +297,34 @@ function AdminIngredientManagement() {
 
                     <h2> <ProductOutlined /> ข้อมูลวัตถุดิบในระบบ</h2>
 
+                    <Input.Search
+                        placeholder="ค้นหาวัตถุดิบ"
+                        allowClear
+                        enterButton="ค้นหา"
+                        size="middle"
+                        style={{ maxWidth: 350, marginBottom: 20 }}
+                        onSearch={(value) => setSearchText(value)}
+                        onChange={(e) => setSearchText(e.target.value)}
+                    />
+
+                    <br />
                     <Space style={{ marginBottom: 16 }}>
                         <Button type="primary" onClick={openModal}><PlusSquareOutlined /> เพิ่มประเภทวัตถุดิบ</Button>
-                    </Space>
+                    </Space>                    
 
-                    <p>
-                        <Table
-                            columns={columns}
-                            dataSource={ingredients}
-                            rowKey="i_id"
-                            loading={loading}
-                            pagination={{ pageSize: 10 }}
-                        />
-                    </p>
+                    <Table
+                        columns={columns}
+                        dataSource={ingredients.filter((item) => {
+                            if (!searchText) return true;
+                            const lower = searchText.toLowerCase();
+                            return Object.values(item).some((val) =>
+                                String(val).toLowerCase().includes(lower)
+                            );
+                        })}
+                        rowKey="c_id"
+                        loading={loading}
+                        pagination={{ pageSize: 10 }}
+                    />
 
                     {/* Modal */}
                     <Modal

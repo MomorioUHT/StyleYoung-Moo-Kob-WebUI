@@ -35,6 +35,7 @@ function AdminSupplierManagement() {
 
     const [suppliers, setSuppliers] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [searchText, setSearchText] = useState("");
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
@@ -305,19 +306,34 @@ function AdminSupplierManagement() {
 
                     <h2> <TruckOutlined /> ข้อมูลผู้จำหน่ายในระบบ</h2>
 
+                    <Input.Search
+                        placeholder="ค้นหาผู้จำหน่าย"
+                        allowClear
+                        enterButton="ค้นหา"
+                        size="middle"
+                        style={{ maxWidth: 350, marginBottom: 20 }}
+                        onSearch={(value) => setSearchText(value)}
+                        onChange={(e) => setSearchText(e.target.value)}
+                    />
+
+                    <br />
                     <Space style={{ marginBottom: 16 }}>
                         <Button type="primary" onClick={openModal}><PlusSquareOutlined /> เพิ่มผู้จำหน่าย</Button>
-                    </Space>
-    
-                    <p>
-                        <Table
-                            columns={columns}
-                            dataSource={suppliers}
-                            rowKey="sup_id"
-                            loading={loading}
-                            pagination={{ pageSize: 10 }}
-                        />
-                    </p>
+                    </Space>                    
+
+                    <Table
+                        columns={columns}
+                        dataSource={suppliers.filter((item) => {
+                            if (!searchText) return true;
+                            const lower = searchText.toLowerCase();
+                            return Object.values(item).some((val) =>
+                                String(val).toLowerCase().includes(lower)
+                            );
+                        })}
+                        rowKey="c_id"
+                        loading={loading}
+                        pagination={{ pageSize: 10 }}
+                    />
 
                     {/* Modal */}
                     <Modal

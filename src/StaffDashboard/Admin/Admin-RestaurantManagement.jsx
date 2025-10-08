@@ -34,6 +34,7 @@ function AdminRestaurantManagement() {
 
     const [restaurants, setRestaurants] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [searchText, setSearchText] = useState("");
 
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [form] = Form.useForm();
@@ -305,19 +306,34 @@ function AdminRestaurantManagement() {
 
                     <h2> <HomeOutlined /> ข้อมูลร้านอาหารในระบบ</h2>
 
+                    <Input.Search
+                        placeholder="ค้นหาร้านอาหาร"
+                        allowClear
+                        enterButton="ค้นหา"
+                        size="middle"
+                        style={{ maxWidth: 350, marginBottom: 20 }}
+                        onSearch={(value) => setSearchText(value)}
+                        onChange={(e) => setSearchText(e.target.value)}
+                    />
+
+                    <br />
                     <Space style={{ marginBottom: 16 }}>
                         <Button type="primary" onClick={openModal}><PlusSquareOutlined /> เพิ่มร้านอาหาร</Button>
-                    </Space>
-    
-                    <p>
-                        <Table
-                            columns={columns}
-                            dataSource={restaurants}
-                            rowKey="r_id"
-                            loading={loading}
-                            pagination={{ pageSize: 10 }}
-                        />
-                    </p>
+                    </Space>                    
+
+                    <Table
+                        columns={columns}
+                        dataSource={restaurants.filter((item) => {
+                            if (!searchText) return true;
+                            const lower = searchText.toLowerCase();
+                            return Object.values(item).some((val) =>
+                                String(val).toLowerCase().includes(lower)
+                            );
+                        })}
+                        rowKey="c_id"
+                        loading={loading}
+                        pagination={{ pageSize: 10 }}
+                    />
 
                     {/* Modal */}
                     <Modal
