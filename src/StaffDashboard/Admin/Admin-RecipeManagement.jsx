@@ -134,15 +134,32 @@ function AdminRecipeManagement() {
             return;
         }
 
-        if (
-            newIngredients.length === 0 ||
-            newIngredients.some(
-                (i) => !i.i_id || !i.ingre_use_amount || parseFloat(i.ingre_use_amount) <= 0
-            )
-        ) {
+        if (newIngredients.length === 0) {
             warningNotification(
                 "เกิดข้อผิดพลาด",
-                "กรุณาเพิ่มวัตถุดิบอย่างน้อย 1 อัน และกรอกจำนวนที่ใช้ให้ถูกต้อง (มากกว่า 0)"
+                "กรุณาเพิ่มวัตถุดิบอย่างน้อย 1 อัน"
+            );
+            return;
+        }
+
+        const incompleteIngredient = newIngredients.some(
+            (i) => !i.i_id || !i.ingre_use_amount
+        );
+        if (incompleteIngredient) {
+            warningNotification(
+                "เกิดข้อผิดพลาด",
+                "กรุณากรอกข้อมูลวัตถุดิบให้ครบทุกช่อง"
+            );
+            return;
+        }
+        
+        const invalidAmount = newIngredients.some(
+            (i) => parseFloat(i.ingre_use_amount) <= 0
+        );
+        if (invalidAmount) {
+            warningNotification(
+                "เกิดข้อผิดพลาด",
+                "จำนวนวัตถุดิบต้องมากกว่า 0"
             );
             return;
         }
