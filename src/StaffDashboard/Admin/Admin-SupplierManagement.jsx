@@ -8,7 +8,7 @@ import {
     infoNotification
 } from "../../middleware/displayer";
 
-import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space} from "antd";
+import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Table, Button, Modal, Form, Input } from "antd";
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
@@ -21,7 +21,8 @@ import {
     TruckOutlined,
     ReadOutlined,
     ShoppingCartOutlined,
-    ProductOutlined
+    ProductOutlined,
+    PlusSquareOutlined
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
@@ -32,9 +33,22 @@ function AdminSupplierManagement() {
     const [collapsed, setCollapsed] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
 
+    const [suppliers, setSuppliers] = useState([]);
+    const [loading, setLoading] = useState(false);
+
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [form] = Form.useForm();
+
     const {
         token: { colorBgContainer },
     } = theme.useToken();
+
+    // Modal Handlers
+    const openModal = () => setIsModalOpen(true);
+    const closeModal = () => {
+        setIsModalOpen(false);
+        form.resetFields();
+    };
 
     // Verifier User
     const verifyUser = async () => {
@@ -59,8 +73,28 @@ function AdminSupplierManagement() {
         }
     };
 
+    // Fetch suppliers
+    const fetchSuppliers = async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const res = await api.get("/suppliers", {
+                headers: {
+                    'api-key': API_KEY,
+                    Authorization: `Bearer ${token}`
+                },
+            });
+            setSuppliers(res.data);
+        } catch (err) {
+            errorNotification("โหลดข้อมูลผู้จำหน่ายล้มเหลว", "กรุณาลองใหม่อีกครั้ง");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         verifyUser();
+        fetchSuppliers();
     }, []);
 
     const handleMenuClick = (e) => {
@@ -69,6 +103,49 @@ function AdminSupplierManagement() {
             window.location.reload();
         } else {
             navigate(`/administrator/${e.key}`);
+        }
+    };
+
+    // Add supplier function
+    const addSupplier = async () => {
+        try {
+            const values = await form.validateFields();
+            const token = localStorage.getItem("token");
+
+            const phonePattern = /^[0-9]{9}$/;
+            if (!phonePattern.test(values.supplier_tel)) {
+                warningNotification("ข้อมูลไม่ถูกต้อง", "หมายเลขโทรศัพท์ต้องเป็นตัวเลข 9 หลัก (เบอร์สำนักงาน 02)");
+                return;
+            }
+
+            const payload = {
+                supplier_name: values.supplier_name,
+                supplier_tel: values.supplier_tel,
+                supplier_address: values.supplier_address
+            };
+
+            const res = await api.post("/registersupplier", payload, {
+                headers: {
+                    'api-key': API_KEY,
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+
+            if (res.status === 201) {
+                successNotification("เพิ่มผู้จำหน่ายสำเร็จ", res.data.message);
+                fetchSuppliers();
+                closeModal();
+            }
+        } catch (err) {
+            if (err.response) {
+                if (err.response.status === 409) {
+                    warningNotification("เพิ่มร้านอาหารล้มเหลว", err.response.data.message);
+                } else if (err.response.status === 500) {
+                    errorNotification("เกิดข้อผิดพลาด", err.response.data.message);
+                }
+            } else {
+                errorNotification("เกิดข้อผิดพลาด", "กรุณาตรวจสอบข้อมูลอีกครั้งหรือลองใหม่");
+            }
         }
     };
 
@@ -85,6 +162,14 @@ function AdminSupplierManagement() {
 
     const userMenuItems = [
         { key: "logout", icon: <LogoutOutlined />, label: "Logout" },
+    ];
+
+    // Supplier Tables
+    const columns = [
+        { title: "ID", dataIndex: "sup_id", key: "sup_id" },
+        { title: "ชื่อผู้จำหน่าย", dataIndex: "sup_name", key: "sup_name" },
+        { title: "เบอร์ผู้จำหน่าย", dataIndex: "sup_tel", key: "sup_tel" },
+        { title: "ที่อยู่ผู้จำหน่าย", dataIndex: "sup_address", key: "sup_address" },
     ];
 
     return (
@@ -219,9 +304,42 @@ function AdminSupplierManagement() {
                     </Breadcrumb>
 
                     <h2> <TruckOutlined /> ข้อมูลผู้จำหน่ายในระบบ</h2>
+
+                    <Space style={{ marginBottom: 16 }}>
+                        <Button type="primary" onClick={openModal}><PlusSquareOutlined /> เพิ่มผู้จำหน่าย</Button>
+                    </Space>
+    
                     <p>
-                        SUPPLIER TABLE
+                        <Table
+                            columns={columns}
+                            dataSource={suppliers}
+                            rowKey="sup_id"
+                            loading={loading}
+                            pagination={{ pageSize: 10 }}
+                        />
                     </p>
+
+                    {/* Modal */}
+                    <Modal
+                        title="เพิ่มร้านอาหารใหม่"
+                        open={isModalOpen}
+                        onOk={addSupplier}
+                        onCancel={closeModal}
+                        okText="บันทึก"
+                        cancelText="ยกเลิก"
+                    >
+                        <Form form={form} layout="vertical">
+                            <Form.Item name="supplier_name" label="ชื่อผู้จำหน่าย" rules={[{ required: true, message: 'กรุณากรอกชื่อผู้จำหน่าย' }]}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item name="supplier_tel" label="เบอร์โทรผู้จำหน่าย" rules={[{ required: true, message: 'กรุณากรอกเบอร์โทรผู้จำหน่าย' }]}>
+                                <Input />
+                            </Form.Item>
+                            <Form.Item name="supplier_address" label="ที่อยู่ผู้จำหน่าย" rules={[{ required: true, message: 'กรุณากรอกที่อยู่ของผู้จำหน่าย' }]}>
+                                <Input />
+                            </Form.Item>
+                        </Form>
+                    </Modal>
                 </Content>
             </Layout>
         </Layout>

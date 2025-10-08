@@ -303,6 +303,8 @@ function AdminRestaurantManagement() {
                         <Breadcrumb.Item>จัดการข้อมูลร้านอาหาร</Breadcrumb.Item>
                     </Breadcrumb>
 
+                    <h2> <HomeOutlined /> ข้อมูลร้านอาหารในระบบ</h2>
+
                     <Space style={{ marginBottom: 16 }}>
                         <Button type="primary" onClick={openModal}><PlusSquareOutlined /> เพิ่มร้านอาหาร</Button>
                     </Space>
@@ -311,7 +313,7 @@ function AdminRestaurantManagement() {
                         <Table
                             columns={columns}
                             dataSource={restaurants}
-                            rowKey="s_id"
+                            rowKey="r_id"
                             loading={loading}
                             pagination={{ pageSize: 10 }}
                         />
