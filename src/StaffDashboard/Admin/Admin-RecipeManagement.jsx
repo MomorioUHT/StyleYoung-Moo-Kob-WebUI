@@ -5,10 +5,9 @@ import {
     errorNotification, 
     warningNotification, 
     successNotification, 
-    infoNotification
 } from "../../middleware/displayer";
 
-import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Card, Modal, Table, Spin, Input, Button } from "antd";
+import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Card, Modal, Table, Spin, Input, Button, Select } from "antd";
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
@@ -26,6 +25,7 @@ import {
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
+const { Option } = Select;
 
 function AdminRecipeManagement() {
     const navigate = useNavigate();
@@ -34,10 +34,19 @@ function AdminRecipeManagement() {
     const [userInfo, setUserInfo] = useState(null);
 
     const [recipes, setRecipes] = useState([]);
+    const [avaliableProducts, setAvailableProducts] = useState([]);
+    const [ingredients, setIngredients] = useState([]);
+
     const [loading, setLoading] = useState(true);
     const [selectedRecipe, setSelectedRecipe] = useState(null);
+
     const [modalCardVisible, setModalCardVisible] = useState(false);
     const [searchText, setSearchText] = useState("");
+
+    // for open New Recipe
+    const [addRecipeModalVisible, setAddRecipeModalVisible] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [newIngredients, setNewIngredients] = useState([]);
 
     const {
         token: { colorBgContainer },
@@ -83,9 +92,107 @@ function AdminRecipeManagement() {
         }
     };
 
+    const fetchAvailableProducts = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get("/availableRecipe", {
+                headers: {
+                    "api-key": API_KEY,
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                },
+            });
+            setAvailableProducts(res.data);
+        } catch (err) {
+            console.log("NO AVALIABLE RECIPE");
+            // errorNotification("โหลดข้อมูลสินค้าที่ยังไม่มีสูตรล้มเหลว", err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchIngredients = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get("/ingredients", {
+                headers: {
+                    "api-key": API_KEY,
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                },
+            });
+            setIngredients(res.data);
+        } catch (err) {
+            console.log("NO AVALIABLE RECIPE");
+            // errorNotification("โหลดข้อมูลสินค้าที่ยังไม่มีสูตรล้มเหลว", err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleSaveRecipe = async () => {
+        if (!selectedProduct) {
+            warningNotification("เกิดข้อผิดพลาด", "กรุณาเลือกสินค้า");
+            return;
+        }
+
+        if (
+            newIngredients.length === 0 ||
+            newIngredients.some(
+                (i) => !i.i_id || !i.ingre_use_amount || parseFloat(i.ingre_use_amount) <= 0
+            )
+        ) {
+            warningNotification(
+                "เกิดข้อผิดพลาด",
+                "กรุณาเพิ่มวัตถุดิบอย่างน้อย 1 อัน และกรอกจำนวนที่ใช้ให้ถูกต้อง (มากกว่า 0)"
+            );
+            return;
+        }
+
+        const payload = {
+            p_id: selectedProduct.p_id,
+            ingredients: newIngredients.map((i) => ({
+                i_id: i.i_id,
+                ingre_use_amount: parseFloat(i.ingre_use_amount),
+            })),
+        };
+
+        try {
+            const res = await api.post("/registerRecipe", payload, {
+                headers: {
+                    "api-key": API_KEY,
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+
+            successNotification("สร้างสูตรอาหารสำเร็จ", res.data.message);
+            setAddRecipeModalVisible(false);
+            fetchRecipes();
+            fetchAvailableProducts();
+        } catch (err) {
+            errorNotification("สร้างสูตรอาหารล้มเหลว", err.message);
+        }
+    };
+
+    const addIngredientRow = () => {
+        setNewIngredients([...newIngredients, { i_id: null, i_name: null, ingre_use_amount: "" }]);
+    };
+
+    const removeIngredientRow = (index) => {
+        const updated = [...newIngredients];
+        updated.splice(index, 1);
+        setNewIngredients(updated);
+    };
+
+    const updateIngredient = (index, field, value) => {
+        const updated = [...newIngredients];
+        updated[index][field] = value;
+        setNewIngredients(updated);
+    };   
+
     useEffect(() => {
         verifyUser();
         fetchRecipes();
+        fetchAvailableProducts();
+        fetchIngredients();
     }, []);
 
     const handleMenuClick = (e) => {
@@ -100,6 +207,12 @@ function AdminRecipeManagement() {
     const openRecipeModal = (recipe) => {
         setSelectedRecipe(recipe);
         setModalCardVisible(true);
+    };
+
+    const openAddRecipeModal = () => {
+        setSelectedProduct(null);
+        setNewIngredients([]);
+        setAddRecipeModalVisible(true);
     };
 
     const menuItems = [
@@ -338,6 +451,79 @@ function AdminRecipeManagement() {
                                 pagination={false}
                             />
                         )}
+                    </Modal>
+
+                    <Modal
+                        open={addRecipeModalVisible}
+                        title="เพิ่มสูตรอาหารใหม่"
+                        onCancel={() => setAddRecipeModalVisible(false)}
+                        footer={null}
+                        width={800}
+                    >
+                        <Space direction="vertical" style={{ width: "100%" }}>
+                            {/* เลือก product */}
+                            <Select
+                                placeholder="เลือกสินค้า"
+                                style={{ width: "100%" }}
+                                value={selectedProduct?.p_id || undefined}
+                                onChange={(value) => {
+                                    const prod = avaliableProducts.find(p => p.p_id === value);
+                                    setSelectedProduct(prod);
+                                }}
+                            >
+                                {avaliableProducts.map((p) => (
+                                    <Option key={p.p_id} value={p.p_id}>
+                                        {p.p_name}
+                                    </Option>
+                                ))}
+                            </Select>
+
+                            {newIngredients.map((ing, idx) => (
+                                <Space key={idx} style={{ display: "flex", marginBottom: 8 }} align="start">
+                                    <Select
+                                        placeholder="เลือกวัตถุดิบ"
+                                        style={{ width: 200 }}
+                                        value={ing.i_id || undefined}
+                                        onChange={(value) => {
+                                            const ingObj = ingredients.find(i => i.i_id === value);
+                                            updateIngredient(idx, "i_id", ingObj.i_id);
+                                            updateIngredient(idx, "i_name", ingObj.i_name);
+                                        }}
+                                    >
+                                        {ingredients
+                                            .filter(i => {
+                                                return !newIngredients.some((ingRow, rIdx) => rIdx !== idx && ingRow.i_id === i.i_id);
+                                            })
+                                            .map((i) => (
+                                                <Option key={i.i_id} value={i.i_id}>
+                                                    {i.i_name}
+                                                </Option>
+                                            ))}
+                                    </Select>
+
+                                    <Input
+                                        placeholder="จำนวนที่ใช้"
+                                        type="number"
+                                        value={ing.ingre_use_amount}
+                                        onChange={(e) => updateIngredient(idx, "ingre_use_amount", e.target.value)}
+                                    />
+
+                                    <Button danger onClick={() => removeIngredientRow(idx)}>ลบ</Button>
+                                </Space>
+                            ))}
+
+
+                            <Button type="dashed" onClick={addIngredientRow} style={{ width: "100%" }}>
+                                + เพิ่มวัตถุดิบ
+                            </Button>
+
+                            <Button
+                                type="primary"
+                                onClick={handleSaveRecipe} 
+                            >
+                                บันทึก
+                            </Button>
+                        </Space>
                     </Modal>
                     
                 </Content>
