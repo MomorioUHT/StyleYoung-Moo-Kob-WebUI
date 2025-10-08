@@ -8,7 +8,7 @@ import {
     infoNotification
 } from "../../middleware/displayer";
 
-import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space} from "antd";
+import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Card, Modal, Table, Spin, Input, Button } from "antd";
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
@@ -21,7 +21,8 @@ import {
     TruckOutlined,
     ReadOutlined,
     ShoppingCartOutlined,
-    ProductOutlined
+    ProductOutlined,
+    PlusSquareOutlined
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
@@ -31,6 +32,12 @@ function AdminRecipeManagement() {
     const API_KEY = process.env.REACT_APP_API_KEY;
     const [collapsed, setCollapsed] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
+
+    const [recipes, setRecipes] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [selectedRecipe, setSelectedRecipe] = useState(null);
+    const [modalCardVisible, setModalCardVisible] = useState(false);
+    const [searchText, setSearchText] = useState("");
 
     const {
         token: { colorBgContainer },
@@ -59,8 +66,26 @@ function AdminRecipeManagement() {
         }
     };
 
+    const fetchRecipes = async () => {
+        setLoading(true);
+        try {
+            const res = await api.get("/recipes", {
+                headers: {
+                    "api-key": API_KEY,
+                    Authorization: `Bearer ${localStorage.getItem("token")}`
+                },
+            });
+            setRecipes(res.data);
+        } catch (err) {
+            errorNotification("โหลดข้อมูลสูตรอาหารล้มเหลว", err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     useEffect(() => {
         verifyUser();
+        fetchRecipes();
     }, []);
 
     const handleMenuClick = (e) => {
@@ -70,6 +95,11 @@ function AdminRecipeManagement() {
         } else {
             navigate(`/administrator/${e.key}`);
         }
+    };
+
+    const openRecipeModal = (recipe) => {
+        setSelectedRecipe(recipe);
+        setModalCardVisible(true);
     };
 
     const menuItems = [
@@ -85,6 +115,13 @@ function AdminRecipeManagement() {
 
     const userMenuItems = [
         { key: "logout", icon: <LogoutOutlined />, label: "Logout" },
+    ];
+
+    // PerCard Recipes
+    const columns = [
+        { title: "ID", dataIndex: "i_id", key: "i_id" },
+        { title: "ชื่อวัตถุดิบ", dataIndex: "i_name", key: "i_name" },
+        { title: "ปริมาณที่ใช้", dataIndex: "ingre_use_amount", key: "ingre_use_amount" },
     ];
 
     return (
@@ -218,10 +255,91 @@ function AdminRecipeManagement() {
                         <Breadcrumb.Item>จัดการข้อมูลสูตรอาหาร</Breadcrumb.Item>
                     </Breadcrumb>
 
-                    <h2> <ReadOutlined /> ข้อมูลสูตรอาหารในระบบ</h2>
-                    <p>
-                        INGREDIENT TABLE
-                    </p>
+                    <h2>
+                        <ReadOutlined /> ข้อมูลสูตรอาหารในระบบ
+                    </h2>
+
+                    <Input.Search
+                        placeholder="ค้นหาสูตรอาหาร"
+                        allowClear
+                        enterButton="ค้นหา"
+                        size="middle"
+                        style={{ maxWidth: 350, marginBottom: 20 }}
+                        onSearch={(value) => setSearchText(value)}
+                        onChange={(e) => setSearchText(e.target.value)}
+                        value={searchText}
+                    />
+
+                    <br />
+                    <Space style={{ marginBottom: 16 }}>
+                        <Button type="primary" onClick={openAddRecipeModal}><PlusSquareOutlined /> เพิ่มสูตรอาหาร</Button>
+                    </Space>   
+
+                    {loading ? (
+                        <Spin size="large" style={{ display: "block", margin: "50px auto" }} />
+                    ) : (
+                        <div
+                            style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                                gap: "20px",
+                                marginTop: "20px",
+                            }}
+                        >
+                            {recipes
+                                .filter((item) => {
+                                    const product = item.product_recipe;
+                                    return product.p_name
+                                        .toLowerCase()
+                                        .includes(searchText.toLowerCase());
+                                })
+                                .map((item) => {
+                                    const product = item.product_recipe;
+                                    return (
+                                        <Card
+                                            key={product.p_id}
+                                            hoverable
+                                            style={{
+                                                textAlign: "center",
+                                                height: 200,
+                                                borderRadius: 12,
+                                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                            }}
+                                            onClick={() => openRecipeModal(product)}
+                                        >
+                                            <ReadOutlined
+                                                style={{ fontSize: 50, color: "#1677ff", marginTop: 20 }}
+                                            />
+                                            <h3 style={{ marginTop: 20 }}>{product.p_name}</h3>
+                                        </Card>
+                                    );
+                                })}
+                        </div>
+                    )}
+
+                    <Modal
+                        open={modalCardVisible}
+                        title={
+                            selectedRecipe
+                                ? `สูตรอาหาร: ${selectedRecipe.p_name}`
+                                : "สูตรอาหาร"
+                        }
+                        onCancel={() => setModalCardVisible(false)}
+                        footer={null}
+                        width={700}
+                    >
+                        {selectedRecipe && (
+                            <Table
+                                columns={columns}
+                                dataSource={selectedRecipe.ingredients.map((ing) => ({
+                                    key: ing.i_id,
+                                    ...ing,
+                                }))}
+                                pagination={false}
+                            />
+                        )}
+                    </Modal>
+                    
                 </Content>
             </Layout>
         </Layout>

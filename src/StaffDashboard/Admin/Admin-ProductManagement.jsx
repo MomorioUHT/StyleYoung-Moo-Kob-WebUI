@@ -8,7 +8,7 @@ import {
     infoNotification
 } from "../../middleware/displayer";
 
-import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Table, Button, Modal, Form, Input } from "antd";
+import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Table, Button, Modal, Form, Input, Select } from "antd";
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
@@ -26,6 +26,7 @@ import {
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
+const { Option } = Select;
 
 function AdminProductManagement() {
     const navigate = useNavigate();
@@ -130,7 +131,8 @@ function AdminProductManagement() {
             const payload = {
                 product_name: values.product_name,
                 product_price: price,
-                product_weight: weight
+                product_weight: weight,
+                product_grade: values.product_grade
             };
 
             const res = await api.post("/registerProduct", payload, {
@@ -363,6 +365,13 @@ function AdminProductManagement() {
                             </Form.Item>
                             <Form.Item name="product_weight" label="น้ำหนักของสินค้า (กิโลกรัม)" rules={[{ required: true, message: 'กรุณากรอกน้ำหนักสินค้า' }]}>
                                 <Input />
+                            </Form.Item>
+                            <Form.Item name="product_grade" label="เกรดของสินค้า" rules={[{ required: true, message: 'กรุณาเลือกตำแหน่ง' }]}>
+                                <Select placeholder="เลือกตำแหน่ง">
+                                    <Option value="1">สำหรับขายลูกค้า</Option>
+                                    <Option value="2">สำหรับขายร้านอาหาร</Option>
+                                    <Option value="0">สำหรับผลิต</Option>
+                                </Select>
                             </Form.Item>
                         </Form>
                     </Modal>
