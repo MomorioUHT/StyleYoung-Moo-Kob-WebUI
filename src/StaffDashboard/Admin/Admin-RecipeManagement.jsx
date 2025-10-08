@@ -164,9 +164,10 @@ function AdminRecipeManagement() {
             });
 
             successNotification("สร้างสูตรอาหารสำเร็จ", res.data.message);
-            setAddRecipeModalVisible(false);
             fetchRecipes();
             fetchAvailableProducts();
+            fetchIngredients();
+            setAddRecipeModalVisible(false);
         } catch (err) {
             errorNotification("สร้างสูตรอาหารล้มเหลว", err.message);
         }
