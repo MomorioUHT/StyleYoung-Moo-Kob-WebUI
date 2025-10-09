@@ -15,6 +15,9 @@ import AdminRecipeManagement from "./StaffPages/Admin/Admin-RecipeManagement";
 import WarehouseDashboard from "./StaffPages/Warehouse/Warehouse-Dashboard";
 import WarehouseSupplylogs from "./StaffPages/Warehouse/Warehouse-SupplyLogs";
 
+import ProductionDashboard from "./StaffPages/Production/Production-Dashboard";
+import ProductionProductionLogs from "./StaffPages/Production/Production-ProductionLogs";
+
 import NotFoundPage from "./middleware/NotFoundPage";
 
 function App() {
@@ -35,6 +38,9 @@ function App() {
 
             <Route path='/warehouse/dashboard' element={<WarehouseDashboard />}/>
             <Route path='/warehouse/supplylogs' element={<WarehouseSupplylogs />}/>
+
+            <Route path='/production/dashboard' element={<ProductionDashboard />} />
+            <Route path='/production/prodlogs' element={<ProductionProductionLogs />} />
 
             <Route path='/home' element={<CustomerHomePage />}/>
 

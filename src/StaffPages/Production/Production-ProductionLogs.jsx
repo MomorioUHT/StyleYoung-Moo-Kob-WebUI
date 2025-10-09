@@ -5,48 +5,39 @@ import {
     errorNotification,
 } from "../../middleware/displayer";
 
-import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Table, Input } from "antd";
+import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Input, Table } from "antd";
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
     UserOutlined,
     DashboardOutlined,
     LogoutOutlined,
-    RedoOutlined,
-    ProductOutlined
+    ReadOutlined,
+    UnorderedListOutlined
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
 
-function WarehouseSupplylogs() {
+function ProductionProductionLogs() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;
     const [collapsed, setCollapsed] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
 
-    const [loading, setLoading] = useState(false);
     const [logsSearchText, setLogsSearchText] = useState("");
-    const [ingredientsSearchText, setIngredientsSearchText] = useState("");
-
-    const [supplyLogs, setSupplyLogs] = useState([]);
-    const [ingredients, setIngredients] = useState([]);
+    const [loading, setLoading] = useState(false);
+    const [productionLogs, setProductionLogs] = useState([]);
 
     const {
         token: { colorBgContainer },
     } = theme.useToken();
 
-    const menuItems = [
-        { key: "dashboard", icon: <DashboardOutlined />, label: "หน้าหลัก" },
-        { key: "supplylogs", icon: <RedoOutlined />, label: "ประวัติการรับวัตถุดิบ" }
-    ];
-
-    // Supply logs columns
-    const supplyLogsColumns = [
-        { title: "ID", dataIndex: "supply_id", key: "supply_id" },
-        { title: "ชื่อผู้จำหน่าย", dataIndex: "sup_name", key: "sup_name" },
-        { title: "วัตถุดิบที่นำเข้า", dataIndex: "i_name", key: "i_name" },
-        { title: "จำนวนที่รับเข้า (หน่วย)", dataIndex: "sup_quantity", key: "sup_quantity" },
-        { title: "วันที่รับสินค้า", dataIndex: "sup_date", key: "sup_date" , 
+    // ProductionLogs Columns
+    const productionLogsColumns = [
+        { title: "ID", dataIndex: "prod_id", key: "prod_id" },
+        { title: "ชื่อสินค้าที่ผลิต", dataIndex: "p_name", key: "p_name" },
+        { title: "จำนวนที่ผลิต (หน่วย)", dataIndex: "prod_quantity", key: "prod_quantity" },
+        { title: "วันที่ผลิต", dataIndex: "prod_date", key: "prod_date" , 
             render: (text) => {
             if (!text) return "-";
             const date = new Date(text);
@@ -61,11 +52,9 @@ function WarehouseSupplylogs() {
         }}
     ];
 
-    // Ingredient Table
-    const ingredientsColumns = [
-        { title: "ID", dataIndex: "i_id", key: "i_id" },
-        { title: "ชื่อวัตถุดิบ", dataIndex: "i_name", key: "i_name" },
-        { title: "ปริมาณที่มี (หน่วย)", dataIndex: "i_amount", key: "i_amount" }
+    const menuItems = [
+        { key: "dashboard", icon: <DashboardOutlined />, label: "หน้าหลัก" },
+        { key: "prodlogs", icon: <UnorderedListOutlined />, label: "ประวัติการผลิต"}
     ];
 
     // ตรวจสอบสิทธิ์ผู้ใช้
@@ -86,38 +75,18 @@ function WarehouseSupplylogs() {
         }
     };
 
-    // Fetch Ingredients
-    const fetchIngredients = async () => {
-        setLoading(true);
-        try {
-            const token = localStorage.getItem("token");
-            const res = await api.get("/ingredients", {
-                headers: {
-                    'api-key': API_KEY,
-                    Authorization: `Bearer ${token}`
-                },
-            });
-            setIngredients(res.data);
-        } catch (err) {
-            errorNotification("โหลดข้อมูลวัตถุดิบล้มเหลว", "กรุณาลองใหม่อีกครั้ง");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Fetch Supply logs 
-    const fetchSupplyLogs = async () => {
+    const fetchProductionLogs = async () => {
         const token = localStorage.getItem("token");
         try {
-            const res = await api.get("/supplyLogs", {
+            const res = await api.get("/productionLogs", {
                 headers: {
                     "api-key": API_KEY,
                     Authorization: `Bearer ${token}`,
                 },
             });
-            setSupplyLogs(res.data);
+            setProductionLogs(res.data);
         } catch (err) {
-            errorNotification("โหลดข้อมูล logs การรับสินค้าล้มเหลว", "กรุณาลองใหม่อีกครั้ง");
+            errorNotification("โหลดข้อมูล logs การผลิตสินค้าล้มเหลว", "กรุณาลองใหม่อีกครั้ง");
         } finally {
             setLoading(false);
         }       
@@ -125,8 +94,7 @@ function WarehouseSupplylogs() {
 
     useEffect(() => {
         verifyUser();
-        fetchSupplyLogs();
-        fetchIngredients();
+        fetchProductionLogs();
     }, []);
 
     const handleMenuClick = (e) => {
@@ -134,7 +102,7 @@ function WarehouseSupplylogs() {
             localStorage.removeItem("token");
             window.location.reload();
         } else {
-            navigate(`/warehouse/${e.key}`);
+            navigate(`/production/${e.key}`);
         }
     };
 
@@ -178,13 +146,13 @@ function WarehouseSupplylogs() {
                             style={{ width: 70, height: 70, objectFit: "contain", marginBottom: 8 }}
                         />
                     )}
-                    <span>{collapsed ? "Warehouse" : "Warehouse Panel"}</span>
+                    <span>{collapsed ? "Production" : "Production Panel"}</span>
                 </div>
 
                 <Menu
                     theme="dark"
                     mode="inline"
-                    defaultSelectedKeys={["supplylogs"]}
+                    defaultSelectedKeys={["prodlogs"]}
                     items={menuItems}
                     onClick={handleMenuClick}
                     style={{ background: "#001529" }}
@@ -236,40 +204,12 @@ function WarehouseSupplylogs() {
                     }}
                 >
                     <Breadcrumb style={{ marginBottom: 16 }}>
-                        <Breadcrumb.Item>Warehouse</Breadcrumb.Item>
-                        <Breadcrumb.Item>ประวัติการรับวัตถุดิบเข้าคลัง</Breadcrumb.Item>
+                        <Breadcrumb.Item>Production</Breadcrumb.Item>
+                        <Breadcrumb.Item>ประวัติการผลิต</Breadcrumb.Item>
                     </Breadcrumb>
 
                     <h2>
-                        <ProductOutlined /> ข้อมูลวัตถุดิบในคลัง
-                    </h2>
-
-                    <Input.Search
-                        placeholder="ค้นหาวัตถุดิบในคลัง"
-                        allowClear
-                        enterButton="ค้นหา"
-                        size="middle"
-                        style={{ maxWidth: 350, marginBottom: 20 }}
-                        onSearch={(value) => setIngredientsSearchText(value)}
-                        onChange={(e) => setIngredientsSearchText(e.target.value)}
-                    />
-
-                    <Table
-                        columns={ingredientsColumns}
-                        dataSource={ingredients.filter((item) => {
-                            if (!ingredientsSearchText) return true;
-                            const lower = ingredientsSearchText.toLowerCase();
-                            return Object.values(item).some((val) =>
-                                String(val).toLowerCase().includes(lower)
-                            );
-                        })}
-                        rowKey="i_id"
-                        loading={loading}
-                        pagination={{ pageSize: 10 }}
-                    />
-
-                    <h2>
-                        <RedoOutlined /> ประวัติการรับวัตถุดิบเข้าคลัง
+                        <UnorderedListOutlined /> ข้อมูลประวัติการผลิต
                     </h2>
 
                     <Input.Search
@@ -283,8 +223,8 @@ function WarehouseSupplylogs() {
                     />
                     
                     <Table
-                        columns={supplyLogsColumns}
-                        dataSource={supplyLogs.filter((item) => {
+                        columns={productionLogsColumns}
+                        dataSource={productionLogs.filter((item) => {
                             if (!logsSearchText) return true;
                             const lower = logsSearchText.toLowerCase();
                             return Object.values(item).some((val) =>
@@ -302,4 +242,4 @@ function WarehouseSupplylogs() {
     );
 }
 
-export default WarehouseSupplylogs;
+export default ProductionProductionLogs;

@@ -14,28 +14,27 @@ import {
     UserOutlined,
     DashboardOutlined,
     LogoutOutlined,
-    RightCircleOutlined,
     ReadOutlined,
-    AuditOutlined,
-    ShoppingOutlined,
-    RedoOutlined 
+    UnorderedListOutlined,
+    MergeCellsOutlined
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
 const { Option } = Select;
 
-function WarehouseDashboard() {
+function ProductionDashboard() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;
     const [collapsed, setCollapsed] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
 
-    const [receiveModalVisible, setReceiveModalVisible] = useState(false);
+    const [modalVisible, setModalVisible] = useState(false);
     const [loading, setLoading] = useState(false);
 
-    const [suppliers, setSuppliers] = useState([]);
     const [products, setProducts] = useState([]);
-    const [selectedSupplier, setSelectedSupplier] = useState(null);
+    const [ingredients, setIngredients] = useState([]);
+    const [recipes, setRecipes] = useState([]);
+
     const [selectedProduct, setSelectedProduct] = useState(null);
     const [quantity, setQuantity] = useState(0);
 
@@ -45,7 +44,7 @@ function WarehouseDashboard() {
 
     const menuItems = [
         { key: "dashboard", icon: <DashboardOutlined />, label: "หน้าหลัก" },
-        { key: "supplylogs", icon: <RedoOutlined />, label: "ประวัติการรับวัตถุดิบ" }
+        { key: "prodlogs", icon: <UnorderedListOutlined />, label: "ประวัติการผลิต"}
     ];
 
     // ตรวจสอบสิทธิ์ผู้ใช้
@@ -75,56 +74,76 @@ function WarehouseDashboard() {
             localStorage.removeItem("token");
             window.location.reload();
         } else {
-            navigate(`/warehouse/${e.key}`);
+            navigate(`/production/${e.key}`);
         }
     };
 
     const userMenuItems = [{ key: "logout", icon: <LogoutOutlined />, label: "Logout" }];
 
-        const openModal = async () => {
-            setReceiveModalVisible(true);
-            try {
-                setLoading(true);
-                const [supRes, ingreRes] = await Promise.all([
-                    api.get("/suppliers", { headers: { "api-key": API_KEY } }),
-                    api.get("/ingredients", { headers: { "api-key": API_KEY } }),
-                ]);
-                setSuppliers(supRes.data);
-                setProducts(ingreRes.data);
-            } catch {
-                errorNotification("โหลดข้อมูลไม่สำเร็จ", "โปรดลองอีกครั้ง");
-            } finally {
-                setLoading(false);
-            }
-        };
+    const openModal = async () => {
+        setModalVisible(true);
+        try {
+            setLoading(true);
+            const [prodRes, ingreRes, recipeRes] = await Promise.all([
+            api.get("/productsWithRecipe", { headers: { "api-key": API_KEY } }),
+            api.get("/ingredients", { headers: { "api-key": API_KEY } }),
+            api.get("/recipes", { headers: { "api-key": API_KEY } }),
+        ]);
 
-    const createSupplyLogs = async () => {
-        if (!selectedSupplier || !selectedProduct || !quantity || quantity <= 0 || !Number.isInteger(quantity)) {
-            warningNotification(
-                "เกิดข้อผิดพลาด",
-                "ข้อมูลไม่ครบหรือไม่ถูกต้อง"
-            );
+        setProducts(prodRes.data);
+        setIngredients(ingreRes.data);
+
+        const recipeData = recipeRes.data.map(r => r.product_recipe);
+        setRecipes(recipeData);
+        } catch {
+            errorNotification("โหลดข้อมูลไม่สำเร็จ", "โปรดลองอีกครั้ง");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+
+    const handleProduce =  async () => {
+        if (!selectedProduct || quantity <= 0 || !Number.isInteger(quantity)) {
+            warningNotification("ข้อมูลไม่ถูกต้อง", "กรุณาเลือกสินค้าและกรอกจำนวนการผลิตที่ถูกต้อง");
             return;
         }
 
+        const selectedRecipe = recipes.find(r => r.p_id === selectedProduct)?.ingredients || [];
+
+        const insufficient = selectedRecipe.some(ingre => {
+            const available = ingredients.find(i => i.i_id === ingre.i_id)?.i_amount || 0;
+            return quantity * ingre.ingre_use_amount > available;
+        });
+
+        if (insufficient) {
+            warningNotification("วัตถุดิบไม่เพียงพอ", "จำนวนการผลิตมากกว่าวัตถุดิบที่มีในระบบ");
+            return;
+        }
+
+        const payload = {
+            product_id: selectedProduct,
+            produce_quantity: quantity,
+            ingredients: selectedRecipe.map(ingre => ({
+                i_id: ingre.i_id,
+                ingre_use_amount: ingre.ingre_use_amount * quantity
+            })),
+        };
+
         try {
             setLoading(true);
-            await api.post(
-                "/createSupplyLogs",
-                {
-                    supplier_id: selectedSupplier,
-                    ingredient_id: selectedProduct,
-                    supply_quantity: quantity,
-                },
-                { headers: { "api-key": API_KEY } }
-            );
-            successNotification("สำเร็จ", "บันทึกการรับวัตถุดิบเข้าคลังเรียบร้อยแล้ว");
-            setReceiveModalVisible(false);
-            setSelectedSupplier(null);
+            await api.post("/createProductionLogs", payload, {
+                headers: { "api-key": API_KEY }
+            });
+
+            successNotification("สำเร็จ", "บันทึกการผลิตเรียบร้อยแล้ว");
+
+            setModalVisible(false);
             setSelectedProduct(null);
             setQuantity(0);
-        } catch {
-            errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถบันทึกข้อมูลได้");
+        } catch (err) {
+            console.error(err);
+            errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถบันทึกการผลิตได้");
         } finally {
             setLoading(false);
         }
@@ -168,7 +187,7 @@ function WarehouseDashboard() {
                             style={{ width: 70, height: 70, objectFit: "contain", marginBottom: 8 }}
                         />
                     )}
-                    <span>{collapsed ? "Warehouse" : "Warehouse Panel"}</span>
+                    <span>{collapsed ? "Production" : "Production Panel"}</span>
                 </div>
 
                 <Menu
@@ -226,12 +245,12 @@ function WarehouseDashboard() {
                     }}
                 >
                     <Breadcrumb style={{ marginBottom: 16 }}>
-                        <Breadcrumb.Item>Warehouse</Breadcrumb.Item>
+                        <Breadcrumb.Item>Production</Breadcrumb.Item>
                         <Breadcrumb.Item>หน้าหลัก</Breadcrumb.Item>
                     </Breadcrumb>
 
                     <h2>
-                        <ReadOutlined /> หน้าหลักคลังสินค้า
+                        <ReadOutlined /> หน้าหลักฝ่ายการผลิต
                     </h2>
 
                     <div
@@ -253,55 +272,24 @@ function WarehouseDashboard() {
                             onClick={openModal}
                         >
                             <div style={{ fontSize: 50, color: "#1677ff", marginTop: 20 }}>
-                                <RightCircleOutlined />
+                                <MergeCellsOutlined />
                             </div>
-                            <h3 style={{ marginTop: 20 }}>รับวัตถุดิบเข้าคลัง</h3>
-                        </Card>
-
-                        <Card
-                            hoverable
-                            style={{
-                                textAlign: "center",
-                                height: 200,
-                                borderRadius: 12,
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                            }}
-                            // onClick={openModal}
-                        >
-                            <div style={{ fontSize: 50, color: "#1677ff", marginTop: 20 }}>
-                                <AuditOutlined />
-                            </div>
-                            <h3 style={{ marginTop: 20 }}>รับสินค้าหลังการแยกเกรด</h3>
-                        </Card>
-
-                        <Card
-                            hoverable
-                            style={{
-                                textAlign: "center",
-                                height: 200,
-                                borderRadius: 12,
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                            }}
-                            // onClick={openModal}
-                        >
-                            <div style={{ fontSize: 50, color: "#1677ff", marginTop: 20 }}>
-                                <ShoppingOutlined />
-                            </div>
-                            <h3 style={{ marginTop: 20 }}>จัดของตามคำสั่งซื้อ</h3>
+                            <h3 style={{ marginTop: 20 }}>ผลิตสินค้า</h3>
                         </Card>
                     </div>
 
                     {/* Modal */}
                     <Modal
-                        title="รับวัตถุดิบเข้าคลัง"
-                        open={receiveModalVisible}
-                        onCancel={() => setReceiveModalVisible(false)}
+                        title="ผลิตสินค้า"
+                        open={modalVisible}
+                        onCancel={() => setModalVisible(false)}
+                        width={700}
                         footer={[
-                            <Button key="cancel" onClick={() => setReceiveModalVisible(false)}>
+                            <Button key="cancel" onClick={() => setModalVisible(false)}>
                                 ยกเลิก
                             </Button>,
-                            <Button key="save" type="primary" onClick={createSupplyLogs} loading={loading}>
-                                บันทึก
+                            <Button key="save" type="primary" onClick={handleProduce} loading={loading}>
+                                ตรวจสอบ / บันทึก
                             </Button>,
                         ]}
                     >
@@ -309,41 +297,64 @@ function WarehouseDashboard() {
                             <Spin />
                         ) : (
                             <>
-                                <p><b>เลือกผู้จำหน่ายที่จะนำของเข้า:</b></p>
+                                <p><b>เลือกสินค้าที่ต้องการจะผลิต:</b></p>
                                 <Select
                                     style={{ width: "100%", marginBottom: 16 }}
-                                    placeholder="เลือกผู้จำหน่าย"
-                                    value={selectedSupplier}
-                                    onChange={setSelectedSupplier}
-                                >
-                                    {suppliers.map((sup) => (
-                                        <Option key={sup.sup_id} value={sup.sup_id}>
-                                            {sup.sup_name}
-                                        </Option>
-                                    ))}
-                                </Select>
-
-                                <p><b>เลือกวัตถุดิบที่จะรับเข้า:</b></p>
-                                <Select
-                                    style={{ width: "100%", marginBottom: 16 }}
-                                    placeholder="เลือกวัตถุดิบ"
+                                    placeholder="เลือกสินค้า"
                                     value={selectedProduct}
                                     onChange={setSelectedProduct}
                                 >
-                                    {products.map((ing) => (
-                                        <Option key={ing.i_id} value={ing.i_id}>
-                                            {ing.i_name}
+                                    {products.map((p) => (
+                                        <Option key={p.p_id} value={p.p_id}>
+                                            {p.p_name}
                                         </Option>
                                     ))}
                                 </Select>
 
-                                <p><b>จำนวนที่นำเข้า (หน่วย):</b></p>
+                                <p><b>จำนวนที่ผลิต (หน่วย):</b></p>
                                 <InputNumber
-                                    style={{ width: "100%" }}
+                                    style={{ width: "100%", marginBottom: 16 }}
                                     placeholder="กรอกจำนวน"
                                     value={quantity}
                                     onChange={setQuantity}
                                 />
+
+                                {selectedProduct && (() => {
+                                const selectedRecipe = recipes.find(r => r.p_id === selectedProduct)?.ingredients || [];
+                                return (
+                                    <>
+                                    <p><b>สูตรวัตถุดิบ:</b></p>
+                                    <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: 16 }}>
+                                        <thead>
+                                        <tr>
+                                            <th style={{ borderBottom: "1px solid #ccc", padding: 8, textAlign: "left" }}>วัตถุดิบ</th>
+                                            <th style={{ borderBottom: "1px solid #ccc", padding: 8 }}>สูตรต่อหน่วย</th>
+                                            <th style={{ borderBottom: "1px solid #ccc", padding: 8 }}>จำนวนผลิต</th>
+                                            <th style={{ borderBottom: "1px solid #ccc", padding: 8 }}>จำนวนที่ต้องใช้</th>
+                                            <th style={{ borderBottom: "1px solid #ccc", padding: 8 }}>คงเหลือในระบบ</th>
+                                        </tr>
+                                        </thead>
+                                        <tbody>
+                                        {selectedRecipe.map((ingre) => {
+                                            const totalNeeded = quantity * ingre.ingre_use_amount;
+                                            const available = ingredients.find(i => i.i_id === ingre.i_id)?.i_amount || 0;
+                                            const isExceed = totalNeeded > available;
+                                            return (
+                                            <tr key={ingre.i_id} style={{ background: isExceed ? "#ffe6e6" : "transparent" }}>
+                                                <td style={{ padding: 8 }}>{ingre.i_name}</td>
+                                                <td style={{ padding: 8, textAlign: "center" }}>{ingre.ingre_use_amount}</td>
+                                                <td style={{ padding: 8, textAlign: "center" }}>{quantity}</td>
+                                                <td style={{ padding: 8, textAlign: "center" }}>{totalNeeded}</td>
+                                                <td style={{ padding: 8, textAlign: "center" }}>{available}</td>
+                                            </tr>
+                                            )
+                                        })}
+                                        </tbody>
+                                    </table>
+                                    </>
+                                )
+                                })()}
+
                             </>
                         )}
                     </Modal>
@@ -353,4 +364,4 @@ function WarehouseDashboard() {
     );
 }
 
-export default WarehouseDashboard;
+export default ProductionDashboard;
