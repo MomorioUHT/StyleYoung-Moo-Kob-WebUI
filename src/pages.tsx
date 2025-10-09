@@ -3,14 +3,17 @@ import LoginRegister from "./LoginRegisterPage/LoginRegisterPage";
 
 import CustomerHomePage from "./Customer/CustomerHomePage";
 
-import AdminDashboard from "./StaffDashboard/Admin/Admin-Dashboard";
-import AdminStaffManagement from "./StaffDashboard/Admin/Admin-StaffManagement";
-import AdminCustomerManagement from "./StaffDashboard/Admin/Admin-CustomerManagement";
-import AdminProductManagement from "./StaffDashboard/Admin/Admin-ProductManagement";
-import AdminSupplierManagement from "./StaffDashboard/Admin/Admin-SupplierManagement";
-import AdminRestaurantManagement from "./StaffDashboard/Admin/Admin-RestaurantManagement";
-import AdminIngredientManagement from "./StaffDashboard/Admin/Admin-IngredientManagement";
-import AdminRecipeManagement from "./StaffDashboard/Admin/Admin-RecipeManagement";
+import AdminDashboard from "./StaffPages/Admin/Admin-Dashboard";
+import AdminStaffManagement from "./StaffPages/Admin/Admin-StaffManagement";
+import AdminCustomerManagement from "./StaffPages/Admin/Admin-CustomerManagement";
+import AdminProductManagement from "./StaffPages/Admin/Admin-ProductManagement";
+import AdminSupplierManagement from "./StaffPages/Admin/Admin-SupplierManagement";
+import AdminRestaurantManagement from "./StaffPages/Admin/Admin-RestaurantManagement";
+import AdminIngredientManagement from "./StaffPages/Admin/Admin-IngredientManagement";
+import AdminRecipeManagement from "./StaffPages/Admin/Admin-RecipeManagement";
+
+import WarehouseDashboard from "./StaffPages/Warehouse/Warehouse-Dashboard";
+import WarehouseSupplylogs from "./StaffPages/Warehouse/Warehouse-SupplyLogs";
 
 import NotFoundPage from "./middleware/NotFoundPage";
 
@@ -29,6 +32,9 @@ function App() {
             <Route path='/administrator/restaurants' element={<AdminRestaurantManagement />}/>
             <Route path='/administrator/ingredients' element={<AdminIngredientManagement />}/>
             <Route path='/administrator/recipes' element={<AdminRecipeManagement />}/>
+
+            <Route path='/warehouse/dashboard' element={<WarehouseDashboard />}/>
+            <Route path='/warehouse/supplylogs' element={<WarehouseSupplylogs />}/>
 
             <Route path='/home' element={<CustomerHomePage />}/>
 
