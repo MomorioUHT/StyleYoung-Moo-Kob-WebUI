@@ -116,7 +116,6 @@ function ProductionDashboard() {
     const userMenuItems = [{ key: "logout", icon: <LogoutOutlined />, label: "Logout" }];
 
     const openIncomeModal = async () => {
-        setIncomeModalVisible(true);
         try {
             setLoading(true);
             const [prodWaitToBeAdded, prodCurrent] = await Promise.all([
@@ -126,6 +125,7 @@ function ProductionDashboard() {
 
         setToBeAddedProducts(prodWaitToBeAdded.data);
         setCurrentProducts(prodCurrent.data);
+        setIncomeModalVisible(true);
         } catch {
             errorNotification("โหลดข้อมูลไม่สำเร็จ", "โปรดลองอีกครั้ง");
         } finally {
@@ -211,16 +211,16 @@ function ProductionDashboard() {
         const qcProduct = toBeAddedProducts.find(p => p.qc_id === record.qc_id);
         const currentProduct = currentProducts.find(p => p.p_id === record.target_p_id);
 
-        if (!qcProduct || !currentProduct) {
-            errorNotification("ไม่พบข้อมูลสินค้า", "โปรดลองอีกครั้ง");
-            return;
-        }
+        // if (!qcProduct || !currentProduct) {
+        //     errorNotification("ไม่พบข้อมูลสินค้า", "โปรดลองอีกครั้ง");
+        //     return;
+        // }
 
-        // ตรวจสอบ grade ให้ตรงกัน
-        if (qcProduct.qc_grade !== currentProduct.p_grade) {
-            warningNotification("เกรดไม่ตรงกัน", "ไม่สามารถจับคู่สินค้าที่คนละเกรดได้");
-            return;
-        }
+        // // ตรวจสอบ grade ให้ตรงกัน
+        // if (qcProduct.qc_grade !== currentProduct.p_grade) {
+        //     warningNotification("เกรดไม่ตรงกัน", "ไม่สามารถจับคู่สินค้าที่คนละเกรดได้");
+        //     return;
+        // }
 
         // ตรวจสอบน้ำหนัก (QC ต้องมี weight >= current)
         if (qcProduct.p_weight < currentProduct.p_weight) {
