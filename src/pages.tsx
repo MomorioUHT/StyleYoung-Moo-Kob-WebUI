@@ -17,6 +17,8 @@ import WarehouseSupplylogs from "./StaffPages/Warehouse/Warehouse-SupplyLogs";
 
 import ProductionDashboard from "./StaffPages/Production/Production-Dashboard";
 import ProductionProductionLogs from "./StaffPages/Production/Production-ProductionLogs";
+import CustomerCartPage from "./Customer/CustomerCartPage";
+import CustomerOrderPage from "./Customer/CustomerOrderPage";
 
 import QCDashboard from "./StaffPages/QC/QC-Dashboard";
 import QCQCLogs from "./StaffPages/QC/QC-QCLogs";
@@ -49,6 +51,8 @@ function App() {
             <Route path='/qc/qclogs' element={<QCQCLogs />} />
 
             <Route path='/home' element={<CustomerHomePage />}/>
+            <Route path='/cart' element={<CustomerCartPage />}/>
+            <Route path='/orders' element={<CustomerOrderPage />} />
 
             <Route path="*" element={<NotFoundPage />} />
         </Routes>            

@@ -98,6 +98,31 @@ function CustomerHomePage() {
         fetchAvailableProducts();
     }, []);
 
+    const handleAddToCart = (product) => {
+        try {
+            let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+            const existingIndex = cart.findIndex((item) => item.p_id === product.p_id);
+
+            if (existingIndex !== -1) {
+                cart[existingIndex].quantity += 1;
+            } else {
+                cart.push({
+                    p_id: product.p_id,
+                    p_name: product.p_name,
+                    p_price: product.p_price,
+                    picture_url: product.picture_url,
+                    quantity: 1,
+                });
+            }
+            localStorage.setItem("cart", JSON.stringify(cart));
+
+            successNotification("เพิ่มลงตะกร้าสำเร็จ", `${product.p_name} ถูกเพิ่มแล้ว!`);
+        } catch (error) {
+            errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถเพิ่มสินค้าได้");
+        }
+    };
+
     return (
         <Layout style={{ height: "100vh", width: "100vw", overflow: "hidden" }}>
             <Sider
@@ -312,6 +337,24 @@ function CustomerHomePage() {
                                             </p>
                                         )}
                                     </div>
+
+
+                                    <button
+                                        onClick={() => handleAddToCart(item)}
+                                        disabled={item.p_quantity <= 0}
+                                        style={{
+                                            backgroundColor: item.p_quantity > 0 ? "#1677ff" : "#ccc",
+                                            color: "#fff",
+                                            border: "none",
+                                            borderRadius: 6,
+                                            padding: "6px 12px",
+                                            cursor: item.p_quantity > 0 ? "pointer" : "not-allowed",
+                                            fontWeight: 500,
+                                            transition: "background 0.2s ease",
+                                        }}
+                                    >
+                                        🛒 เพิ่มลงตะกร้า
+                                    </button>
                                 </Card>
                                 ))}
                         </div>
