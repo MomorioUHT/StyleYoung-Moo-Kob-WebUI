@@ -200,8 +200,9 @@ function CustomerOrderPage() {
                     pending_payment: "#faad14",
                     wait_for_check: "#1890ff",
                     wait_for_packaging: "#722ed1",
-                    pending_delivery: "#fa541c",
+                    pending_delivery: "#f505d1",
                     completed: "#52c41a",
+                    cancelled: "#fa541c",
                 };
                 return (
                     <span style={{ color: colorMap[text] || "#000", fontWeight: 600 }}>
