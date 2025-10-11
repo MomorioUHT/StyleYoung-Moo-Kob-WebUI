@@ -114,7 +114,6 @@ function AdminProductManagement() {
             const values = await form.validateFields();
             const token = localStorage.getItem("token");
 
-
             const price = Number(values.product_price);
             const weight = Number(values.product_weight);
 
@@ -122,23 +121,27 @@ function AdminProductManagement() {
                 warningNotification("ข้อมูลไม่ถูกต้อง", "กรุณากรอกราคาและน้ำหนักให้เป็นตัวเลข");
                 return;
             }
-
             if (price <= 0 || weight <= 0) {
                 warningNotification("ข้อมูลไม่ถูกต้อง", "ราคาหรือน้ำหนักต้องมากกว่า 0");
                 return;
             }
 
-            const payload = {
-                product_name: values.product_name,
-                product_price: price,
-                product_weight: weight,
-                product_grade: values.product_grade
-            };
+            const formData = new FormData();
+            formData.append("product_name", values.product_name);
+            formData.append("product_price", price);
+            formData.append("product_weight", weight);
+            formData.append("product_grade", values.product_grade);
+            
+            const fileInput = document.querySelector('input[type="file"]');
+            if (fileInput && fileInput.files.length > 0) {
+                formData.append("p_picture", fileInput.files[0]);
+            }
 
-            const res = await api.post("/registerProduct", payload, {
+            const res = await api.post("/registerProduct", formData, {
                 headers: {
                     'api-key': API_KEY,
                     Authorization: `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data', // สำคัญ
                 },
             });
 
@@ -356,24 +359,52 @@ function AdminProductManagement() {
                         okText="บันทึก"
                         cancelText="ยกเลิก"
                     >
-                        <Form form={form} layout="vertical">
-                            <Form.Item name="product_name" label="ชื่อสินค้า" rules={[{ required: true, message: 'กรุณากรอกชื่อสินค้า' }]}>
-                                <Input />
-                            </Form.Item>
-                            <Form.Item name="product_price" label="ราคาของสินค้า" rules={[{ required: true, message: 'กรุณากรอกราคาสินค้า' }]}>
-                                <Input />
-                            </Form.Item>
-                            <Form.Item name="product_weight" label="น้ำหนักของสินค้า (กิโลกรัม)" rules={[{ required: true, message: 'กรุณากรอกน้ำหนักสินค้า' }]}>
-                                <Input />
-                            </Form.Item>
-                            <Form.Item name="product_grade" label="เกรดของสินค้า" rules={[{ required: true, message: 'กรุณาเลือกตำแหน่ง' }]}>
-                                <Select placeholder="เลือกตำแหน่ง">
-                                    <Option value="1">สำหรับขายลูกค้า</Option>
-                                    <Option value="2">สำหรับขายร้านอาหาร</Option>
-                                    <Option value="0">สำหรับผลิต</Option>
-                                </Select>
-                            </Form.Item>
-                        </Form>
+                    <Form form={form} layout="vertical">
+                        <Form.Item
+                            name="product_name"
+                            label="ชื่อสินค้า"
+                            rules={[{ required: true, message: 'กรุณากรอกชื่อสินค้า' }]}
+                        >
+                            <Input />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="product_price"
+                            label="ราคาของสินค้า"
+                            rules={[{ required: true, message: 'กรุณากรอกราคาสินค้า' }]}
+                        >
+                            <Input />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="product_weight"
+                            label="น้ำหนักของสินค้า (กิโลกรัม)"
+                            rules={[{ required: true, message: 'กรุณากรอกน้ำหนักสินค้า' }]}
+                        >
+                            <Input />
+                        </Form.Item>
+
+                        <Form.Item
+                            name="product_grade"
+                            label="เกรดของสินค้า"
+                            rules={[{ required: true, message: 'กรุณาเลือกเกรดของสินค้า' }]}
+                        >
+                            <Select placeholder="เลือกตำแหน่ง">
+                                <Option value="1">สำหรับขายลูกค้า</Option>
+                                <Option value="2">สำหรับขายร้านอาหาร</Option>
+                                <Option value="0">สำหรับผลิต</Option>
+                            </Select>
+                        </Form.Item>
+
+                        {/* เพิ่ม Input สำหรับรูปสินค้า */}
+                        <Form.Item
+                            name="p_picture"
+                            label="รูปสินค้า"
+                            rules={[{ required: true, message: 'กรุณาอัปโหลดรูปสินค้า' }]}
+                        >
+                            <Input type="file" accept="image/*" />
+                        </Form.Item>
+                    </Form>
                     </Modal>
                 </Content>
             </Layout>

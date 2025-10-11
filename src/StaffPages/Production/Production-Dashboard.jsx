@@ -267,9 +267,18 @@ function ProductionDashboard() {
                             hoverable
                             style={{
                                 textAlign: "center",
-                                height: 200,
-                                borderRadius: 12,
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                height: 230,
+                                borderRadius: 16,
+                                boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+                                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = "translateY(-4px)";
+                                e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.15)";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.08)";
                             }}
                             onClick={openModal}
                         >

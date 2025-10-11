@@ -339,9 +339,18 @@ function WarehouseDashboard() {
                             hoverable
                             style={{
                                 textAlign: "center",
-                                height: 200,
-                                borderRadius: 12,
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                height: 230,
+                                borderRadius: 16,
+                                boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+                                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = "translateY(-4px)";
+                                e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.15)";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.08)";
                             }}
                             onClick={openModal}
                         >
@@ -355,11 +364,20 @@ function WarehouseDashboard() {
                             hoverable
                             style={{
                                 textAlign: "center",
-                                height: 200,
-                                borderRadius: 12,
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                height: 230,
+                                borderRadius: 16,
+                                boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+                                transition: "transform 0.2s ease, box-shadow 0.2s ease",
                             }}
-                            // onClick={openModal}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = "translateY(-4px)";
+                                e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.15)";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.08)";
+                            }}
+                            onClick={openIncomeModal}
                         >
                             <div style={{ fontSize: 50, color: "#1677ff", marginTop: 20 }}>
                                 <AuditOutlined />
@@ -371,9 +389,18 @@ function WarehouseDashboard() {
                             hoverable
                             style={{
                                 textAlign: "center",
-                                height: 200,
-                                borderRadius: 12,
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                height: 230,
+                                borderRadius: 16,
+                                boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+                                transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.transform = "translateY(-4px)";
+                                e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.15)";
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.transform = "translateY(0)";
+                                e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.08)";
                             }}
                             // onClick={openModal}
                         >
@@ -381,22 +408,6 @@ function WarehouseDashboard() {
                                 <ShoppingOutlined />
                             </div>
                             <h3 style={{ marginTop: 20 }}>จัดของตามคำสั่งซื้อ</h3>
-                        </Card>
-
-                        <Card
-                            hoverable
-                            style={{
-                                textAlign: "center",
-                                height: 200,
-                                borderRadius: 12,
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                            }}
-                            onClick={openIncomeModal}
-                        >
-                            <div style={{ fontSize: 50, color: "#1677ff", marginTop: 20 }}>
-                                <FastForwardOutlined />
-                            </div>
-                            <h3 style={{ marginTop: 20 }}>รับสินค้าหลังจากการแยกเกรด</h3>
                         </Card>
                     </div>
 

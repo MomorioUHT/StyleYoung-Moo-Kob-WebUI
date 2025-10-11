@@ -22,7 +22,7 @@ import {
 } from "@ant-design/icons";
 
 import {
-    LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar
+    LineChart, Line, XAxis, YAxis, Tooltip
 } from "recharts";
 
 const { Header, Sider, Content } = Layout;
