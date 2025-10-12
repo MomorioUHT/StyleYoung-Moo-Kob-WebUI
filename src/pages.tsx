@@ -17,6 +17,7 @@ import WarehouseSupplylogs from "./StaffPages/Warehouse/Warehouse-SupplyLogs";
 
 import ProductionDashboard from "./StaffPages/Production/Production-Dashboard";
 import ProductionProductionLogs from "./StaffPages/Production/Production-ProductionLogs";
+
 import CustomerCartPage from "./Customer/Customer-CartPage";
 import CustomerOrderPage from "./Customer/Customer-OrderPage";
 
@@ -24,7 +25,9 @@ import QCDashboard from "./StaffPages/QC/QC-Dashboard";
 import QCQCLogs from "./StaffPages/QC/QC-QCLogs";
 
 import SalesDashboard from "./StaffPages/Sales/Sales-Dashboard";
-import SalesOrderPage from "./StaffPages/Sales/Sales-OrderPage";
+import SalesCustomerOrderPage from "./StaffPages/Sales/Sales-CustomerOrderPage";
+import SalesRestaurantOrderPage from "./StaffPages/Sales/Sales-RetaurantOrderPage";
+import SalesDeliveryPage from "./StaffPages/Sales/Sales-DeliveryPage";
 
 import NotFoundPage from "./middleware/NotFoundPage";
 
@@ -58,8 +61,9 @@ function App() {
             <Route path='/orders' element={<CustomerOrderPage />} />
 
             <Route path='/sales/dashboard' element={<SalesDashboard />}/>
-            <Route path='/sales/orders' element={<SalesOrderPage />} />
-
+            <Route path='/sales/customer-orders' element={<SalesCustomerOrderPage />} />
+            <Route path='/sales/restaurant-orders' element={<SalesRestaurantOrderPage />} />
+            <Route path='/sales/delivery' element={<SalesDeliveryPage />} />
 
             <Route path="*" element={<NotFoundPage />} />
         </Routes>            

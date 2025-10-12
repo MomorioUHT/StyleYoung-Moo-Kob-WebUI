@@ -2,51 +2,39 @@ import { useState, useEffect } from "react";
 import api from "../../middleware/axios";
 import { useNavigate } from "react-router-dom";
 import {
-    Layout,
-    Menu,
-    Breadcrumb,
-    Avatar,
-    Dropdown,
-    theme,
-    Space,
-    Table,
-    Modal,
-    Spin,
-    Select
+    Layout, Menu, Breadcrumb, Avatar, Dropdown, theme,
+    Space, Table, Modal, Spin, Select
 } from "antd";
 import {
-    HomeOutlined,
-    ShoppingCartOutlined,
-    LogoutOutlined,
-    MenuUnfoldOutlined,
-    MenuFoldOutlined,
-    UserOutlined,
+    HomeOutlined, UnorderedListOutlined, LogoutOutlined,
+    MenuUnfoldOutlined, MenuFoldOutlined, UserOutlined, TruckOutlined
 } from "@ant-design/icons";
 import {
-    errorNotification,
-    successNotification
+    errorNotification, successNotification
 } from "../../middleware/displayer";
 
 const { Sider, Header, Content } = Layout;
 const { Option } = Select;
 
-function SalesOrderPage() {
+function SalesDeliveryPage() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;
     const [collapsed, setCollapsed] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
-    const [orders, setOrders] = useState([]);
-    const [orderDetails, setOrderDetails] = useState([]);
+    const [restaurantOrders, setRestaurantOrders] = useState([]);
+    const [customerOrders, setCustomerOrders] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [orderDetailmodalOpen, setOrderDetailModalOpen] = useState(false);
-    const [selectedOrderId, setSelectedOrderId] = useState(null);
     const [filterStatus, setFilterStatus] = useState("");
+
+    const [orderDetails, setOrderDetails] = useState([]);
+    const [selectedOrderId, setSelectedOrderId] = useState(null);
+    const [orderDetailModalOpen, setOrderDetailModalOpen] = useState(false);
 
     const {
         token: { colorBgContainer },
     } = theme.useToken();
 
-    // ตรวจสอบสิทธิ์ผู้ใช้
+    // ✅ ตรวจสอบสิทธิ์ผู้ใช้
     const verifyUser = async () => {
         const token = localStorage.getItem("token");
         try {
@@ -61,25 +49,6 @@ function SalesOrderPage() {
         } catch {
             errorNotification("การตรวจสอบสิทธิ์ล้มเหลว", "กรุณาเข้าสู่ระบบอีกครั้ง");
             navigate("/welcome");
-        }
-    };
-
-    const fetchOrders = async () => {
-        setLoading(true);
-        try {
-            const res = await api.get(
-                "allCustomerOrders",
-                {
-                    headers: {
-                        "api-key": API_KEY,
-                    },
-                }
-            );
-            setOrders(res.data);
-        } catch {
-            errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถดึงคำสั่งซื้อได้");
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -101,80 +70,51 @@ function SalesOrderPage() {
         }
     };
 
-    const confirmOrder = async (customer_id, order_id) => {
-        Modal.confirm({
-            title: "ยืนยันการชำระเงินของลูกค้า",
-            content: (
-                <>
-                    <p>คุณแน่ใจหรือไม่ว่าลูกค้ารหัส {customer_id} ชำระเงินแล้ว</p>
-                    <p>⚠️ การดำเนินการนี้ไม่สามารถย้อนกลับได้</p>
-                </>
-            ),
-            okText: "ยืนยัน",
-            cancelText: "ยกเลิก",
-            onOk: async () => {
-                try {
-                    const res = await api.post(
-                        "/customerOrderDetails",
-                        { order_id },
-                        {
-                            headers: {
-                                "api-key": API_KEY,
-                                Authorization: `Bearer ${localStorage.getItem("token")}`,
-                            },
-                        }
-                    );
-
-                    const order_detail = res.data.map((item) => ({
-                        p_id: item.p_id,
-                        p_quantity: item.quantity,
-                    }));
-
-                    await api.post(
-                        "/confirmTransactions",
-                        {
-                            customer_id,
-                            order_id,
-                            order_detail,
-                        },
-                        {
-                            headers: {
-                                "api-key": API_KEY,
-                                Authorization: `Bearer ${localStorage.getItem("token")}`,
-                            },
-                        }
-                    );
-
-                    successNotification(
-                        "คำสั่งซื้อยืนยันแล้ว",
-                        `คำสั่งซื้อ #${order_id} ถูกยืนยันการชำระเงิน`
-                    );
-                    fetchOrders();
-                } catch (err) {
-                    console.error(err);
-                    errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถยืนยันคำสั่งซื้อได้");
-                }
-            },
-        });
+    // ✅ ดึงข้อมูลคำสั่งซื้อร้านอาหาร
+    const fetchRestaurantOrders = async () => {
+        try {
+            const res = await api.get("allRestaurantOrders", {
+                headers: { "api-key": API_KEY },
+            });
+            setRestaurantOrders(res.data);
+        } catch {
+            errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถดึงคำสั่งซื้อร้านอาหารได้");
+        }
     };
 
-    const rejectOrder = async (customer_id, order_id) => {
+    // ✅ ดึงข้อมูลคำสั่งซื้อลูกค้า
+    const fetchCustomerOrders = async () => {
+        try {
+            const res = await api.get("allCustomerOrders", {
+                headers: { "api-key": API_KEY },
+            });
+            setCustomerOrders(res.data);
+        } catch {
+            errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถดึงคำสั่งซื้อลูกค้าได้");
+        }
+    };
+
+    // ✅ ปุ่ม "จัดส่งของแล้ว"
+    const markAsDelivered = async (orderId, isRestaurant = false) => {
         Modal.confirm({
-            title: "ยืนยันการปฏิเสธคำสั่งซื้อ?",
+            title: "ยืนยันการจัดส่งของแล้ว?",
             content: (
                 <>
-                    <p>คุณแน่ใจหรือไม่ว่าลูกค้ารหัส {customer_id} ยังไม่ชำระเงิน?</p>
+                    <p>คุณแน่ใจหรือไม่ว่าคำสั่งซื้อ #{orderId} จัดส่งแล้ว?</p>
                     <p>⚠️ การดำเนินการนี้ไม่สามารถย้อนกลับได้</p>
                 </>
             ),
             okText: "ยืนยัน",
             cancelText: "ยกเลิก",
-            okType: "danger",
             onOk: async () => {
                 try {
+                    const url = isRestaurant
+                        ? "/markRestaurantDelivered"
+                        : "/markCustomerDelivered";
+
                     await api.post(
-                        "/cancelTransactions",
-                        { customer_id: customer_id, order_id: order_id },
+                        url,
+                        { order_id: orderId },
                         {
                             headers: {
                                 "api-key": API_KEY,
@@ -182,25 +122,96 @@ function SalesOrderPage() {
                             },
                         }
                     );
-                    successNotification("คำสั่งซื้อถูกยกเลิกแล้ว", `คำสั่งซื้อ #${order_id} ถูกปฏิเสธ`);
-                    fetchOrders();
+
+                    successNotification("จัดส่งสำเร็จ", `คำสั่งซื้อ #${orderId} ถูกจัดส่งแล้ว`);
+                    if (isRestaurant) fetchRestaurantOrders();
+                    else fetchCustomerOrders();
                 } catch {
-                    errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถยกเลิกคำสั่งซื้อได้");
+                    errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถอัปเดตสถานะได้");
                 }
             },
         });
     };
-
-    const filteredOrders = filterStatus
-    ? orders.filter((o) => o.c_order_state === filterStatus)
-    : orders;
 
     useEffect(() => {
-        verifyUser();
-        fetchOrders();
+        (async () => {
+            setLoading(true);
+            await verifyUser();
+            await Promise.all([fetchRestaurantOrders(), fetchCustomerOrders()]);
+            setLoading(false);
+        })();
     }, []);
 
-    const columns = [
+    const orderStatusMap = {
+        pending_payment: "รอชำระเงิน",
+        wait_for_check: "รอตรวจสอบ",
+        wait_for_packaging: "รอจัดเตรียมสินค้า",
+        pending_delivery: "รอจัดส่ง",
+        completed: "เสร็จสิ้น",
+        cancelled: "ยกเลิกแล้ว"
+    };
+
+    const filteredRestaurantOrders = filterStatus
+        ? restaurantOrders.filter((o) => o.r_order_state === filterStatus)
+        : restaurantOrders;
+
+    const filteredCustomerOrders = filterStatus
+        ? customerOrders.filter((o) => o.c_order_state === filterStatus)
+        : customerOrders;
+
+    // ✅ ตารางร้านอาหาร
+    const restaurantColumns = [
+        { title: "หมายเลขคำสั่งซื้อ", dataIndex: "r_order_id" },
+        { title: "ชื่อร้านอาหาร", dataIndex: "r_name" },
+        { title: "ที่อยู่จัดส่ง", dataIndex: "r_address" },
+        { title: "สินค้าที่สั่ง", dataIndex: "p_name" },
+        { title: "จำนวน (หน่วย)", dataIndex: "quantity" },
+        { title: "ยอดรวม (฿)", dataIndex: "r_total_payment" },
+        {
+            title: "สถานะ",
+            dataIndex: "r_order_state",
+            render: (text) => {
+                const colorMap = {
+                    pending_payment: "#faad14",
+                    wait_for_check: "#1890ff",
+                    wait_for_packaging: "#722ed1",
+                    pending_delivery: "#f505d1",
+                    completed: "#52c41a",
+                    cancelled: "#fa541c",
+                };
+                return (
+                    <span style={{ color: colorMap[text] || "#000", fontWeight: 600 }}>
+                        {orderStatusMap[text] || text}
+                    </span>
+                );
+            },
+        },
+        {
+            title: "การดำเนินการ",
+            key: "actions",
+            render: (_, record) => {
+                if (record.r_order_state === "completed") return "---";
+                return (
+                    <button
+                        onClick={() => markAsDelivered(record.r_order_id, true)}
+                        style={{
+                            background: "#1890ff",
+                            border: "none",
+                            color: "#fff",
+                            padding: "6px 12px",
+                            borderRadius: 6,
+                            cursor: "pointer",
+                        }}
+                    >
+                        จัดส่งของแล้ว
+                    </button>
+                );
+            },
+        },
+    ];
+
+    // ✅ ตารางลูกค้า
+    const customerColumns = [
         {
             title: "หมายเลขคำสั่งซื้อ",
             dataIndex: "c_order_id",
@@ -215,24 +226,11 @@ function SalesOrderPage() {
                     {text}
                 </a>
             ),
-        },
-        { title: "วันที่สั่งซื้อ", dataIndex: "c_order_date", key: "c_order_date" , 
-            render: (text) => {
-            if (!text) return "-";
-            const date = new Date(text);
-            return new Intl.DateTimeFormat('th-TH', { 
-                day: '2-digit', 
-                month: 'short', 
-                year: 'numeric', 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: false,
-            }).format(date);
-        }},
-        {
-            title: "ยอดรวม (฿)",
-            dataIndex: "total_payment",
-        },
+        },       
+        { title: "ชื่อ", dataIndex: "c_firstname", key: "c_firstname" },
+        { title: "นามสกุล", dataIndex: "c_lastname", key: "c_lastname" },
+        { title: "ที่อยู่จัดส่ง", dataIndex: "c_address" },
+        { title: "ยอดรวม (฿)", dataIndex: "total_payment" },
         {
             title: "สถานะ",
             dataIndex: "c_order_state",
@@ -253,73 +251,39 @@ function SalesOrderPage() {
             },
         },
         {
-            title: "เลขที่อ้างอิงการโอนเงิน",
-            dataIndex: "transaction_code",
-        },
-        {
             title: "การดำเนินการ",
             key: "actions",
             render: (_, record) => {
-                if (record.c_order_state !== "wait_for_check") return "---";
-
+                if (record.c_order_state === "completed") return "---";
                 return (
-                    <Space>
-                        <button
-                            onClick={() => confirmOrder(record.c_id, record.c_order_id)}
-                            style={{
-                                background: "#52c41a",
-                                border: "none",
-                                color: "#fff",
-                                padding: "6px 12px",
-                                borderRadius: 6,
-                                cursor: "pointer",
-                            }}
-                        >
-                            ลูกค้าชำระเงินแล้ว
-                        </button>
-
-                        <button
-                            onClick={() => rejectOrder(record.c_id, record.c_order_id)}
-                            style={{
-                                background: "#f5222d",
-                                border: "none",
-                                color: "#fff",
-                                padding: "6px 12px",
-                                borderRadius: 6,
-                                cursor: "pointer",
-                            }}
-                        >
-                            ลูกค้าไม่ชำระเงิน
-                        </button>
-                    </Space>
+                    <button
+                        onClick={() => markAsDelivered(record.c_order_id, false)}
+                        style={{
+                            background: "#1890ff",
+                            border: "none",
+                            color: "#fff",
+                            padding: "6px 12px",
+                            borderRadius: 6,
+                            cursor: "pointer",
+                        }}
+                    >
+                        จัดส่งของแล้ว
+                    </button>
                 );
             },
         },
     ];
 
-    const detailColumns = [
-        { title: "รหัสสินค้า", dataIndex: "p_id" },
-        { title: "ชื่อสินค้า", dataIndex: "p_name" },
-        { title: "จำนวน", dataIndex: "quantity" },
-        { title: "ราคารวม (฿)", dataIndex: "sub_total" },
-    ];
-
     const menuItems = [
         { key: "dashboard", icon: <HomeOutlined />, label: "หน้าหลัก" },
-        { key: "orders", icon: <ShoppingCartOutlined />, label: "คำสั่งซื้อในระบบ" },
+        { key: "customer-orders", icon: <UnorderedListOutlined />, label: "คำสั่งซื้อจากลูกค้า"},
+        { key: "restaurant-orders", icon: <UnorderedListOutlined />, label: "คำสั่งซื้อจากร้านอาหาร"},
+        { key: "delivery", icon: <TruckOutlined />, label: "จัดการการส่งของ"}
     ];
 
     const userMenuItems = [
         { key: "logout", icon: <LogoutOutlined />, label: "Logout" },
     ];
-
-    const orderStatusMap = {
-        wait_for_check: "รอตรวจสอบคำสั่งซื้อ",
-        wait_for_packaging: "รอจัดเตรียมสินค้า",
-        pending_delivery: "รอจัดส่ง",
-        completed: "เสร็จสิ้น",
-        cancelled: "ยกเลิกแล้ว"
-    };
 
     const handleMenuClick = (e) => {
         if (e.key === "logout") {
@@ -332,6 +296,7 @@ function SalesOrderPage() {
 
     return (
         <Layout style={{ height: "100vh", width: "100vw", overflow: "hidden" }}>
+            {/* ✅ Sidebar */}
             <Sider
                 trigger={null}
                 collapsible
@@ -363,7 +328,7 @@ function SalesOrderPage() {
                     {!collapsed && (
                         <img
                             src="/Logo.png"
-                            alt="Logo2"
+                            alt="Logo"
                             style={{
                                 width: 70,
                                 height: 70,
@@ -378,12 +343,13 @@ function SalesOrderPage() {
                 <Menu
                     theme="dark"
                     mode="inline"
-                    defaultSelectedKeys={["orders"]}
+                    defaultSelectedKeys={["delivery"]}
                     items={menuItems}
                     onClick={handleMenuClick}
                 />
             </Sider>
 
+            {/* ✅ Main Layout */}
             <Layout
                 style={{
                     marginLeft: collapsed ? 80 : 200,
@@ -391,6 +357,7 @@ function SalesOrderPage() {
                     height: "100vh",
                 }}
             >
+                {/* ✅ Header */}
                 <Header
                     style={{
                         background: colorBgContainer,
@@ -420,17 +387,19 @@ function SalesOrderPage() {
                     </Space>
                 </Header>
 
+                {/* ✅ Content */}
                 <Content
                     style={{
                         margin: "16px",
                         padding: 24,
                         background: colorBgContainer,
                         borderRadius: 8,
+                        overflowY: "auto",
                     }}
                 >
                     <Breadcrumb style={{ marginBottom: 16 }}>
-                        <Breadcrumb.Item>หน้าหลัก</Breadcrumb.Item>
-                        <Breadcrumb.Item>คำสั่งซื้อของฉัน</Breadcrumb.Item>
+                        <Breadcrumb.Item>Sales</Breadcrumb.Item>
+                        <Breadcrumb.Item>จัดการการส่งของ</Breadcrumb.Item>
                     </Breadcrumb>
 
                     <Space style={{ marginBottom: 16 }}>
@@ -450,35 +419,53 @@ function SalesOrderPage() {
                         </Select>
                     </Space>
 
+                    <h3>📦 คำสั่งซื้อจากลูกค้า</h3>
                     {loading ? (
                         <Spin size="large" style={{ display: "block", margin: "50px auto" }} />
                     ) : (
                         <Table
-                            dataSource={filteredOrders}
-                            columns={columns}
+                            dataSource={filteredCustomerOrders}
+                            columns={customerColumns}
                             rowKey="c_order_id"
                             pagination={false}
+                            style={{ marginBottom: 40 }}
                         />
                     )}
 
-                    <Modal
-                        title={`รายละเอียดคำสั่งซื้อ ${selectedOrderId}`}
-                        open={orderDetailmodalOpen}
-                        onCancel={() => setOrderDetailModalOpen(false)}
-                        footer={null}
-                        width={700}
-                    >
+                    <h3>🏪 คำสั่งซื้อจากร้านอาหาร</h3>
+                    {loading ? (
+                        <Spin size="large" style={{ display: "block", margin: "50px auto" }} />
+                    ) : (
                         <Table
-                            dataSource={orderDetails}
-                            columns={detailColumns}
-                            rowKey="order_detail_id"
+                            dataSource={filteredRestaurantOrders}
+                            columns={restaurantColumns}
+                            rowKey="r_order_id"
                             pagination={false}
                         />
-                    </Modal>
+                    )}
                 </Content>
+                <Modal
+                    title={`รายละเอียดคำสั่งซื้อ ${selectedOrderId}`}
+                    open={orderDetailModalOpen}
+                    onCancel={() => setOrderDetailModalOpen(false)}
+                    footer={null}
+                    width={700}
+                >
+                    <Table
+                        dataSource={orderDetails}
+                        columns={[
+                            { title: "รหัสสินค้า", dataIndex: "p_id" },
+                            { title: "ชื่อสินค้า", dataIndex: "p_name" },
+                            { title: "จำนวน", dataIndex: "quantity" },
+                            { title: "ราคารวม (฿)", dataIndex: "sub_total" },
+                        ]}
+                        rowKey="order_detail_id"
+                        pagination={false}
+                    />
+                </Modal>
             </Layout>
         </Layout>
     );
 }
 
-export default SalesOrderPage;
+export default SalesDeliveryPage;

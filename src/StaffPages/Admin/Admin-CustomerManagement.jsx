@@ -112,7 +112,7 @@ function AdminCustomerManagement() {
         { title: "ชื่อผู้ใช้", dataIndex: "c_username", key: "c_username" },
         { title: "เบอร์โทรศัพท์", dataIndex: "c_tel", key: "c_tel" },
         { title: "ที่อยู่", dataIndex: "c_address", key: "c_address" },
-        { title: "เข้าสู่ระบบล่าสุด", dataIndex: "s_lastlogin", key: "s_lastlogin" , 
+        { title: "เข้าสู่ระบบล่าสุด", dataIndex: "c_lastlogin", key: "c_lastlogin" , 
             render: (text) => {
             if (!text) return "-";
             const date = new Date(text);

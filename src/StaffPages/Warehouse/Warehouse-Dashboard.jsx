@@ -19,7 +19,6 @@ import {
     AuditOutlined,
     ShoppingOutlined,
     RedoOutlined,
-    FastForwardOutlined
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
@@ -48,7 +47,10 @@ function WarehouseDashboard() {
     // Variables for packaging card
     const [ordersModalVisible, setOrdersModalVisible] = useState(false);
     const [ordersForPackaging, setOrdersForPackaging] = useState([]);
+    const [restaurantOrdersForPackaging, setRestaurantOrdersForPackaging] = useState([]);
     const [orderDetailModalVisible, setOrderDetailModalVisible] = useState(false);
+
+
     const [selectedOrderDetails, setSelectedOrderDetails] = useState([]);
     const [selectedOrderId, setSelectedOrderId] = useState(null);
 
@@ -167,7 +169,7 @@ function WarehouseDashboard() {
             setOrdersModalVisible(true);
         } catch (err) {
             console.error(err);
-            errorNotification("เกิดข้อผิดพลาด", "ไม่มีคำสั่งซื้อในระบบที่รอการจัดของ");
+            errorNotification("เกิดข้อผิดพลาด", "ไม่มีคำสั่งซื้อของลูกค้าในระบบที่รอการจัดของ");
         } finally {
             setLoading(false);
         }
@@ -187,6 +189,22 @@ function WarehouseDashboard() {
         } catch (err) {
             console.error(err);
             errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถดึงรายละเอียดคำสั่งซื้อได้");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchRestaurantOrdersForPackaging = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get("/restaurantOrdersWaitForPackaging", {
+                headers: { "api-key": API_KEY },
+            });
+            setRestaurantOrdersForPackaging(res.data);
+            setOrdersModalVisible(true);
+        } catch (err) {
+            console.error(err);
+            errorNotification("เกิดข้อผิดพลาด", "ไม่มีคำสั่งซื้อของร้านค้าในระบบที่รอการจัดของ");
         } finally {
             setLoading(false);
         }
@@ -213,6 +231,38 @@ function WarehouseDashboard() {
                     errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถยืนยันการจัดสินค้าได้");
                 } finally {
                     setLoading(false);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+            },
+        });
+    };
+
+    const confirmPackagingRestaurant = async (r_order_id) => {
+        Modal.confirm({
+            title: `ยืนยันการจัดสินค้า`,
+            content: `คุณแน่ใจหรือไม่ว่าต้องการยืนยันการจัดสินค้าสำหรับคำสั่งซื้อ #${r_order_id}?`,
+            okText: "ยืนยัน",
+            cancelText: "ยกเลิก",
+            onOk: async () => {
+                try {
+                    setLoading(true);
+                    await api.post(
+                        "/confirmPackagingRestaurant",
+                        { "r_order_id": r_order_id },
+                        { headers: { "api-key": API_KEY } }
+                    );
+                    successNotification("สำเร็จ", `ยืนยันการจัดสินค้า #${r_order_id} เรียบร้อยแล้ว`);
+                    fetchOrdersForPackaging(); // รีเฟรช table
+                } catch (err) {
+                    console.error(err);
+                    errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถยืนยันการจัดสินค้าได้");
+                } finally {
+                    setLoading(false);
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
                 }
             },
         });
@@ -470,7 +520,10 @@ function WarehouseDashboard() {
                                 e.currentTarget.style.transform = "translateY(0)";
                                 e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.08)";
                             }}
-                            onClick={fetchOrdersForPackaging}
+                            onClick={() => {
+                                fetchOrdersForPackaging();
+                                fetchRestaurantOrdersForPackaging();
+                            }}
                         >
                             <div style={{ fontSize: 50, color: "#1677ff", marginTop: 20 }}>
                                 <ShoppingOutlined />
@@ -666,7 +719,8 @@ function WarehouseDashboard() {
                         width={900}
                         footer={null}
                     >
-                        {loading ? <Spin /> : (
+                        <p>คำสั่งซื้อจากลูกค้า</p>
+                        {loading ? <Spin /> : (                           
                             <Table
                                 dataSource={ordersForPackaging}
                                 rowKey="c_order_id"
@@ -708,6 +762,60 @@ function WarehouseDashboard() {
                                             <Button 
                                                 type="primary" 
                                                 onClick={() => confirmPackaging(record.c_order_id)}
+                                                loading={loading}
+                                            >
+                                                ยืนยันการจัดสินค้า
+                                            </Button>
+                                        ),
+                                    },
+                                ]}
+                            />
+                        )}
+                        <p>คำสั่งซื้อจากร้านค้า</p>
+                        {loading ? <Spin /> : (                           
+                            <Table
+                                dataSource={restaurantOrdersForPackaging}
+                                rowKey="r_order_id"
+                                pagination={false}
+                                columns={[
+                                    {
+                                        title: "หมายเลขคำสั่งซื้อ",
+                                        dataIndex: "r_order_id",
+                                    },
+                                    {
+                                        title: "ร้านอาหาร",
+                                        dataIndex: "r_name",
+                                        key: "r_name",
+                                    },
+                                    { title: "วันที่สั่งซื้อ", dataIndex: "r_order_date", key: "r_order_date" , 
+                                        render: (text) => {
+                                        if (!text) return "-";
+                                        const date = new Date(text);
+                                        return new Intl.DateTimeFormat('th-TH', { 
+                                            day: '2-digit', 
+                                            month: 'short', 
+                                            year: 'numeric', 
+                                            hour: '2-digit', 
+                                            minute: '2-digit',
+                                            hour12: false,
+                                        }).format(date);
+                                    }},
+                                    {
+                                        title: "สินค้าที่สั่ง",
+                                        dataIndex: "p_name",
+                                    },
+                                    {
+                                        title: "จำนวนที่สั่ง (หน่วย)",
+                                        dataIndex: "quantity",
+                                    },
+                                    { title: "ยอดรวม (฿)", dataIndex: "r_total_payment" },
+                                    {
+                                        title: "ดำเนินการ",
+                                        key: "action",
+                                        render: (_, record) => (
+                                            <Button 
+                                                type="primary" 
+                                                onClick={() => confirmPackagingRestaurant(record.r_order_id)}
                                                 loading={loading}
                                             >
                                                 ยืนยันการจัดสินค้า

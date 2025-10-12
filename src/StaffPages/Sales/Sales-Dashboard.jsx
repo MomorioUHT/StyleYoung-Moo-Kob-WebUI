@@ -3,9 +3,11 @@ import api from "../../middleware/axios";
 import { useNavigate } from "react-router-dom";
 import { 
     errorNotification,
+    warningNotification,
+    successNotification
 } from "../../middleware/displayer";
 
-import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Card } from "antd";
+import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Card, Modal, Table, Select, Input, Button } from "antd";
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
@@ -14,7 +16,8 @@ import {
     BarChartOutlined,
     UnorderedListOutlined,
     FormOutlined,
-    HomeOutlined
+    HomeOutlined,
+    TruckOutlined
 } from "@ant-design/icons";
 
 const { Header, Sider, Content } = Layout;
@@ -25,13 +28,23 @@ function SalesDashboard() {
     const [collapsed, setCollapsed] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
 
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [products, setProducts] = useState([]);
+    const [restaurants, setRestaurants] = useState([]);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [selectedRestaurant, setSelectedRestaurant] = useState(null);
+    const [quantity, setQuantity] = useState(null);
+    const [confirmModalVisible, setConfirmModalVisible] = useState(false);
+
     const {
         token: { colorBgContainer },
     } = theme.useToken();
 
     const menuItems = [
         { key: "dashboard", icon: <HomeOutlined />, label: "หน้าหลัก" },
-        { key: "orders", icon: <UnorderedListOutlined />, label: "ตรวจสอบคำสั่งซื้อ"}
+        { key: "customer-orders", icon: <UnorderedListOutlined />, label: "คำสั่งซื้อจากลูกค้า"},
+        { key: "restaurant-orders", icon: <UnorderedListOutlined />, label: "คำสั่งซื้อจากร้านอาหาร"},
+        { key: "delivery", icon: <TruckOutlined />, label: "จัดการการส่งของ"}
     ];
 
     // ตรวจสอบสิทธิ์ผู้ใช้
@@ -66,6 +79,157 @@ function SalesDashboard() {
     };
 
     const userMenuItems = [{ key: "logout", icon: <LogoutOutlined />, label: "Logout" }];
+
+    const fetchProductsForRestaurant = async () => {
+        try {
+            const res = await api.get("/productsForRestaurant", {
+                headers: { "api-key": API_KEY },
+            });
+            setProducts(res.data);
+        } catch (err) {
+            warningNotification("โหลดสินค้าไม่สำเร็จ");
+        }
+    };
+
+    const fetchRestaurants = async () => {
+        try {
+            const res = await api.get("/restaurants", {
+                headers: { "api-key": API_KEY },
+            });
+            setRestaurants(res.data);
+        } catch (err) {
+            warningNotification("โหลดร้านอาหารไม่สำเร็จ");
+        }
+    };
+
+    const createRestaurantOrder = () => {
+        setIsModalOpen(true);
+        fetchProductsForRestaurant();
+        fetchRestaurants();
+    };
+
+    const handleCreateOrder = () => {
+        if (!selectedProduct || !selectedRestaurant) {
+            warningNotification("เกิดข้อผิดพลาด","กรุณาเลือกร้านอาหาร และสินค้าให้ครบ");
+            return;
+        }
+
+        const parsedQty = parseInt(quantity, 10);
+        if (isNaN(parsedQty) || parsedQty <= 0) {
+            warningNotification("เกิดข้อผิดพลาด","กรุณากรอกจำนวนสินค้าเป็นจำนวนเต็มมากกว่า 0");
+            return;
+        }
+
+        const productObj = products.find((p) => p.p_id === selectedProduct);
+
+        if (parsedQty > productObj.p_quantity) {
+            warningNotification(`จำนวนสินค้าไม่สามารถมากกว่า ${productObj.p_quantity} ได้`);
+            return;
+        }
+
+        setQuantity(parsedQty);
+        setConfirmModalVisible(true);
+    };
+
+    const handleConfirmOrder = async () => {
+        try {
+            const productObj = products.find((p) => p.p_id === selectedProduct);
+            const total_payment = productObj.p_price * quantity;
+
+            await api.post(
+                "/createRestaurantOrder",
+                {
+                    staff_id: userInfo.s_id,
+                    restaurant_id: selectedRestaurant,
+                    product_id: selectedProduct,
+                    quantity: quantity,
+                    total_payment: total_payment,
+                },
+                { headers: { "api-key": API_KEY } }
+            );
+
+            successNotification("สร้าง Order สำเร็จ");
+            setConfirmModalVisible(false);
+            setIsModalOpen(false);
+            setSelectedProduct(null);
+            setSelectedRestaurant(null);
+            setQuantity(1);
+        } catch (err) {
+            warningNotification("สร้าง Order ล้มเหลว");
+        }
+    };
+
+    const columns = [
+        {
+            title: "ร้านอาหาร",
+            key: "restaurant",
+            render: () => (
+                <Select
+                    style={{ width: "100%" }}
+                    placeholder="เลือกร้านอาหาร"
+                    onChange={(val) => setSelectedRestaurant(val)}
+                    options={restaurants.map((r) => ({
+                        value: r.r_id,
+                        label: r.r_name
+                    }))}
+                    dropdownMatchSelectWidth={300} // เพิ่มความกว้าง dropdown
+                />
+            ),
+        },
+        {
+            title: "สินค้า",
+            key: "product",
+            render: () => (
+                <Select
+                    style={{ width: "100%" }}
+                    placeholder="เลือกสินค้า"
+                    onChange={(val) => setSelectedProduct(val)}
+                    options={products.map((p) => ({
+                        value: p.p_id,
+                        label: `${p.p_name} (คงเหลือ ${p.p_quantity})`
+                    }))}
+                    dropdownMatchSelectWidth={300}
+                />
+            ),
+        },
+        {
+            title: "จำนวน",
+            key: "quantity",
+            render: () => (
+                <Input
+                    value={quantity !== null ? quantity : ""}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    style={{ width: "100%" }}
+                    placeholder="กรอกจำนวน"
+                />
+            ),
+        },
+        {
+            title: "ราคาต่อหน่วย (฿)",
+            key: "price",
+            render: () => {
+                const productObj = products.find((p) => p.p_id === selectedProduct);
+                return <span>{productObj ? productObj.p_price : 0}</span>;
+            },
+        },
+        {
+            title: "คงเหลือในระบบ",
+            key: "stock",
+            render: () => {
+                const productObj = products.find((p) => p.p_id === selectedProduct);
+                return <span>{productObj ? productObj.p_quantity : 0}</span>;
+            },
+        },
+        {
+            title: "ราคารวม (฿)",
+            key: "total",
+            render: () => {
+                const productObj = products.find((p) => p.p_id === selectedProduct);
+                return <span>{productObj ? productObj.p_price * quantity : 0}</span>;
+            },
+        },
+    ];
+
 
     return (
         <Layout style={{ height: "100vh", width: "100vw", overflow: "hidden" }}>
@@ -163,7 +327,7 @@ function SalesDashboard() {
                     }}
                 >
                     <Breadcrumb style={{ marginBottom: 16 }}>
-                        <Breadcrumb.Item>Production</Breadcrumb.Item>
+                        <Breadcrumb.Item>Sales</Breadcrumb.Item>
                         <Breadcrumb.Item>หน้าหลัก</Breadcrumb.Item>
                     </Breadcrumb>
 
@@ -196,15 +360,62 @@ function SalesDashboard() {
                                 e.currentTarget.style.transform = "translateY(0)";
                                 e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.08)";
                             }}
-                            // onClick={handleMenuClick()}
+                            onClick={createRestaurantOrder}
                         >
                             <div style={{ fontSize: 50, color: "#1677ff", marginTop: 20 }}>
                                 <FormOutlined />
                             </div>
-                            <h3 style={{ marginTop: 20 }}>ตรวจสอบคำสั่งซื้อในระบบ</h3>
+                            <h3 style={{ marginTop: 20 }}>สร้าง Order ร้านอาหาร</h3>
                         </Card>
                     </div>
 
+                    {/* Modal สร้าง Order */}
+                    <Modal
+                        title="สร้าง Order ร้านอาหาร"
+                        open={isModalOpen}
+                        onCancel={() => setIsModalOpen(false)}
+                        width={700} // กำหนดความกว้าง
+                        bodyStyle={{ maxHeight: "60vh", overflowY: "auto" }} // scrollable
+                        footer={[
+                            <Button key="cancel" onClick={() => setIsModalOpen(false)}>
+                                ยกเลิก
+                            </Button>,
+                            <Button key="create" type="primary" onClick={handleCreateOrder}>
+                                สร้าง Order
+                            </Button>,
+                        ]}
+                    >
+                        <Table
+                            dataSource={[{ key: 1 }]}
+                            columns={columns}
+                            pagination={false}
+                            scroll={{ y: 300 }}
+                            size="small"
+                        />
+                    </Modal>
+
+                    {/* Modal ยืนยัน Order */}
+                    <Modal
+                        title="ยืนยัน Order"
+                        open={confirmModalVisible}
+                        onCancel={() => setConfirmModalVisible(false)}
+                        footer={[
+                            <Button key="back" onClick={() => setConfirmModalVisible(false)}>
+                                ยกเลิก
+                            </Button>,
+                            <Button key="submit" type="primary" onClick={handleConfirmOrder}>
+                                ยืนยัน
+                            </Button>,
+                        ]}
+                    >
+                        <p>ร้านอาหาร: {restaurants.find((r) => r.r_id === selectedRestaurant)?.r_name}</p>
+                        <p>สินค้า: {products.find((p) => p.p_id === selectedProduct)?.p_name}</p>
+                        <p>ราคาต่อหน่วย: {products.find((p) => p.p_id === selectedProduct)?.p_price} บาท</p>
+                        <p>จำนวน: {quantity}</p>
+                        <p>
+                            ราคารวม: {products.find((p) => p.p_id === selectedProduct)?.p_price * quantity} บาท
+                        </p>
+                    </Modal>
                 </Content>
             </Layout>
         </Layout>
