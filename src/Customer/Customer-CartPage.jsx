@@ -129,7 +129,7 @@ function CustomerCartPage() {
             for (let item of cart) {
                 const found = productData.find((p) => p.p_id === item.p_id);
                 if (!found) {
-                    warningNotification("สินค้าไม่พบ", `${item.p_name} ไม่มีในระบบ`);
+                    warningNotification("ไม่พบสินค้า", `${item.p_name} ไม่มีในระบบ`);
                     continue;
                 }
                 if (found.p_quantity < item.quantity) {
