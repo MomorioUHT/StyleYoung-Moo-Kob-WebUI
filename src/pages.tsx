@@ -1,7 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import LoginRegister from "./LoginRegisterPage/LoginRegisterPage";
 
-import CustomerHomePage from "./Customer/CustomerHomePage";
+import CustomerHomePage from "./Customer/Customer-HomePage";
 
 import AdminDashboard from "./StaffPages/Admin/Admin-Dashboard";
 import AdminStaffManagement from "./StaffPages/Admin/Admin-StaffManagement";
@@ -17,11 +17,14 @@ import WarehouseSupplylogs from "./StaffPages/Warehouse/Warehouse-SupplyLogs";
 
 import ProductionDashboard from "./StaffPages/Production/Production-Dashboard";
 import ProductionProductionLogs from "./StaffPages/Production/Production-ProductionLogs";
-import CustomerCartPage from "./Customer/CustomerCartPage";
-import CustomerOrderPage from "./Customer/CustomerOrderPage";
+import CustomerCartPage from "./Customer/Customer-CartPage";
+import CustomerOrderPage from "./Customer/Customer-OrderPage";
 
 import QCDashboard from "./StaffPages/QC/QC-Dashboard";
 import QCQCLogs from "./StaffPages/QC/QC-QCLogs";
+
+import SalesDashboard from "./StaffPages/Sales/Sales-Dashboard";
+import SalesOrderPage from "./StaffPages/Sales/Sales-OrderPage";
 
 import NotFoundPage from "./middleware/NotFoundPage";
 
@@ -53,6 +56,10 @@ function App() {
             <Route path='/home' element={<CustomerHomePage />}/>
             <Route path='/cart' element={<CustomerCartPage />}/>
             <Route path='/orders' element={<CustomerOrderPage />} />
+
+            <Route path='/sales/dashboard' element={<SalesDashboard />}/>
+            <Route path='/sales/orders' element={<SalesOrderPage />} />
+
 
             <Route path="*" element={<NotFoundPage />} />
         </Routes>            

@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Card, Spin, Input, } from "antd";
 import { 
     errorNotification, 
-    warningNotification, 
     successNotification,
 } from "../middleware/displayer";
 import {
@@ -15,7 +14,6 @@ import {
     MenuUnfoldOutlined,
     UserOutlined,
     MenuFoldOutlined,
-    ReadOutlined
 } from "@ant-design/icons";
 const { Sider, Header, Content } = Layout;
 

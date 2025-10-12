@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import api from "../middleware/axios";
+import api from "../../middleware/axios";
 import { useNavigate } from "react-router-dom";
 import {
     Layout,
@@ -11,12 +11,11 @@ import {
     Space,
     Table,
     Modal,
-    Button,
     Spin,
+    Select
 } from "antd";
 import {
     HomeOutlined,
-    ShoppingOutlined,
     ShoppingCartOutlined,
     LogoutOutlined,
     MenuUnfoldOutlined,
@@ -25,12 +24,13 @@ import {
 } from "@ant-design/icons";
 import {
     errorNotification,
-    successNotification,
-} from "../middleware/displayer";
+    successNotification
+} from "../../middleware/displayer";
 
 const { Sider, Header, Content } = Layout;
+const { Option } = Select;
 
-function CustomerOrderPage() {
+function SalesOrderPage() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;
     const [collapsed, setCollapsed] = useState(false);
@@ -38,13 +38,15 @@ function CustomerOrderPage() {
     const [orders, setOrders] = useState([]);
     const [orderDetails, setOrderDetails] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [modalOpen, setModalOpen] = useState(false);
+    const [orderDetailmodalOpen, setOrderDetailModalOpen] = useState(false);
     const [selectedOrderId, setSelectedOrderId] = useState(null);
+    const [filterStatus, setFilterStatus] = useState("");
 
     const {
         token: { colorBgContainer },
     } = theme.useToken();
 
+    // ตรวจสอบสิทธิ์ผู้ใช้
     const verifyUser = async () => {
         const token = localStorage.getItem("token");
         try {
@@ -54,11 +56,8 @@ function CustomerOrderPage() {
                     Authorization: `Bearer ${token}`,
                 },
             });
-            if (!res.data.user) {
-                navigate("/welcome");
-            } else {
-                setUserInfo(res.data.user);
-            }
+            if (!res.data.user.s_position) navigate("/welcome");
+            else setUserInfo(res.data.user);
         } catch {
             errorNotification("การตรวจสอบสิทธิ์ล้มเหลว", "กรุณาเข้าสู่ระบบอีกครั้ง");
             navigate("/welcome");
@@ -68,9 +67,8 @@ function CustomerOrderPage() {
     const fetchOrders = async () => {
         setLoading(true);
         try {
-            const res = await api.post(
-                "/customerOrders",
-                { customer_id: userInfo?.c_id },
+            const res = await api.get(
+                "allCustomerOrders",
                 {
                     headers: {
                         "api-key": API_KEY,
@@ -103,61 +101,104 @@ function CustomerOrderPage() {
         }
     };
 
-    const handlePayment = async (order_id) => {
-        try {
-            const res = await api.post(
-                "/confirmTransactions",
-                { 
-                    'customer_id': userInfo?.c_id,
-                    'order_id': order_id,
-                },
-                {
-                    headers: {
-                        "api-key": API_KEY,
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
+    const confirmOrder = async (customer_id, order_id) => {
+        Modal.confirm({
+            title: "ยืนยันการชำระเงินของลูกค้า",
+            content: (
+                <>
+                    <p>คุณแน่ใจหรือไม่ว่าลูกค้ารหัส {customer_id} ชำระเงินแล้ว</p>
+                    <p>⚠️ การดำเนินการนี้ไม่สามารถย้อนกลับได้</p>
+                </>
+            ),
+            okText: "ยืนยัน",
+            cancelText: "ยกเลิก",
+            onOk: async () => {
+                try {
+                    const res = await api.post(
+                        "/customerOrderDetails",
+                        { order_id },
+                        {
+                            headers: {
+                                "api-key": API_KEY,
+                                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                            },
+                        }
+                    );
+
+                    const order_detail = res.data.map((item) => ({
+                        p_id: item.p_id,
+                        p_quantity: item.quantity,
+                    }));
+
+                    await api.post(
+                        "/confirmTransactions",
+                        {
+                            customer_id,
+                            order_id,
+                            order_detail,
+                        },
+                        {
+                            headers: {
+                                "api-key": API_KEY,
+                                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                            },
+                        }
+                    );
+
+                    successNotification(
+                        "คำสั่งซื้อยืนยันแล้ว",
+                        `คำสั่งซื้อ #${order_id} ถูกยืนยันการชำระเงิน`
+                    );
+                    fetchOrders();
+                } catch (err) {
+                    console.error(err);
+                    errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถยืนยันคำสั่งซื้อได้");
                 }
-            );
-            successNotification("ชำระเงินสำเร็จ", `คำสั่งซื้อ ${order_id} รอการตรวจสอบ`);
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } catch {
-            errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถดึงรายละเอียดคำสั่งซื้อได้");
-        }
+            },
+        });
     };
 
-    const handleCancel = async (order_id) => {
-        try {
-            const res = await api.post(
-                "/cancelTransactions",
-                { 
-                    'customer_id': userInfo?.c_id,
-                    'order_id': order_id,
-                },
-                {
-                    headers: {
-                        "api-key": API_KEY,
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
+    const rejectOrder = async (customer_id, order_id) => {
+        Modal.confirm({
+            title: "ยืนยันการปฏิเสธคำสั่งซื้อ?",
+            content: (
+                <>
+                    <p>คุณแน่ใจหรือไม่ว่าลูกค้ารหัส {customer_id} ยังไม่ชำระเงิน?</p>
+                    <p>⚠️ การดำเนินการนี้ไม่สามารถย้อนกลับได้</p>
+                </>
+            ),
+            okText: "ยืนยัน",
+            cancelText: "ยกเลิก",
+            okType: "danger",
+            onOk: async () => {
+                try {
+                    await api.post(
+                        "/cancelTransactions",
+                        { customer_id: customer_id, order_id: order_id },
+                        {
+                            headers: {
+                                "api-key": API_KEY,
+                                Authorization: `Bearer ${localStorage.getItem("token")}`,
+                            },
+                        }
+                    );
+                    successNotification("คำสั่งซื้อถูกยกเลิกแล้ว", `คำสั่งซื้อ #${order_id} ถูกปฏิเสธ`);
+                    fetchOrders();
+                } catch {
+                    errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถยกเลิกคำสั่งซื้อได้");
                 }
-            );
-            successNotification("ยกเลิกคำสั่งซื้อสำเร็จ", `คำสั่งซื้อ ${order_id} ถูกยกเลิก`);
-            setTimeout(() => {
-                window.location.reload();
-            }, 1000);
-        } catch {
-            errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถดึงรายละเอียดคำสั่งซื้อได้");
-        }
+            },
+        });
     };
+
+    const filteredOrders = filterStatus
+    ? orders.filter((o) => o.c_order_state === filterStatus)
+    : orders;
 
     useEffect(() => {
         verifyUser();
+        fetchOrders();
     }, []);
-
-    useEffect(() => {
-        if (userInfo) fetchOrders();
-    }, [userInfo]);
 
     const columns = [
         {
@@ -168,7 +209,7 @@ function CustomerOrderPage() {
                     onClick={() => {
                         setSelectedOrderId(text);
                         fetchOrderDetails(text);
-                        setModalOpen(true);
+                        setOrderDetailModalOpen(true);
                     }}
                 >
                     {text}
@@ -212,24 +253,47 @@ function CustomerOrderPage() {
             },
         },
         {
-            title: "ดำเนินการ",
-            render: (_, record) => (
-                <Space>
-                    {record.c_order_state === "pending_payment" && (
-                        <>
-                            <Button
-                                type="primary"
-                                onClick={() => handlePayment(record.c_order_id)}
-                            >
-                                ยืนยันการชำระเงิน
-                            </Button>
-                            <Button danger onClick={() => handleCancel(record.c_order_id)}>
-                                ยกเลิกคำสั่งซื้อ
-                            </Button>
-                        </>
-                    )}
-                </Space>
-            ),
+            title: "เลขที่อ้างอิงการโอนเงิน",
+            dataIndex: "transaction_code",
+        },
+        {
+            title: "การดำเนินการ",
+            key: "actions",
+            render: (_, record) => {
+                if (record.c_order_state !== "wait_for_check") return "---";
+
+                return (
+                    <Space>
+                        <button
+                            onClick={() => confirmOrder(record.c_id, record.c_order_id)}
+                            style={{
+                                background: "#52c41a",
+                                border: "none",
+                                color: "#fff",
+                                padding: "6px 12px",
+                                borderRadius: 6,
+                                cursor: "pointer",
+                            }}
+                        >
+                            ลูกค้าชำระเงินแล้ว
+                        </button>
+
+                        <button
+                            onClick={() => rejectOrder(record.c_id, record.c_order_id)}
+                            style={{
+                                background: "#f5222d",
+                                border: "none",
+                                color: "#fff",
+                                padding: "6px 12px",
+                                borderRadius: 6,
+                                cursor: "pointer",
+                            }}
+                        >
+                            ลูกค้าไม่ชำระเงิน
+                        </button>
+                    </Space>
+                );
+            },
         },
     ];
 
@@ -241,9 +305,8 @@ function CustomerOrderPage() {
     ];
 
     const menuItems = [
-        { key: "home", icon: <HomeOutlined />, label: "หน้าหลัก" },
-        { key: "cart", icon: <ShoppingCartOutlined />, label: "ตะกร้าของฉัน" },
-        { key: "orders", icon: <ShoppingOutlined />, label: "คำสั่งซื้อของฉัน" },
+        { key: "dashboard", icon: <HomeOutlined />, label: "หน้าหลัก" },
+        { key: "orders", icon: <ShoppingCartOutlined />, label: "คำสั่งซื้อในระบบ" },
     ];
 
     const userMenuItems = [
@@ -251,7 +314,6 @@ function CustomerOrderPage() {
     ];
 
     const orderStatusMap = {
-        pending_payment: "รอชำระเงิน",
         wait_for_check: "รอตรวจสอบคำสั่งซื้อ",
         wait_for_packaging: "รอจัดเตรียมสินค้า",
         pending_delivery: "รอจัดส่ง",
@@ -264,7 +326,7 @@ function CustomerOrderPage() {
             localStorage.removeItem("token");
             window.location.reload();
         } else {
-            navigate(`/${e.key}`);
+            navigate(`/sales/${e.key}`);
         }
     };
 
@@ -310,7 +372,7 @@ function CustomerOrderPage() {
                             }}
                         />
                     )}
-                    <span>{collapsed ? "STY" : "Styleyoung Moo Kob"}</span>
+                    <span>{collapsed ? "Sales" : "Sales Panel"}</span>
                 </div>
 
                 <Menu
@@ -346,7 +408,7 @@ function CustomerOrderPage() {
                     <Space>
                         {userInfo && (
                             <span style={{ fontWeight: 500 }}>
-                                {userInfo.c_firstname} {userInfo.c_lastname} ({userInfo.c_username})
+                                {userInfo.s_firstname} {userInfo.s_lastname} ({userInfo.s_username})
                             </span>
                         )}
                         <Dropdown menu={{ items: userMenuItems, onClick: handleMenuClick }}>
@@ -371,11 +433,28 @@ function CustomerOrderPage() {
                         <Breadcrumb.Item>คำสั่งซื้อของฉัน</Breadcrumb.Item>
                     </Breadcrumb>
 
+                    <Space style={{ marginBottom: 16 }}>
+                        <span>กรองตามสถานะ:</span>
+                        <Select
+                            style={{ width: 200 }}
+                            placeholder="เลือกสถานะ"
+                            value={filterStatus}
+                            onChange={(value) => setFilterStatus(value)}
+                            allowClear
+                        >
+                            {Object.entries(orderStatusMap).map(([key, label]) => (
+                                <Option key={key} value={key}>
+                                    {label}
+                                </Option>
+                            ))}
+                        </Select>
+                    </Space>
+
                     {loading ? (
                         <Spin size="large" style={{ display: "block", margin: "50px auto" }} />
                     ) : (
                         <Table
-                            dataSource={orders}
+                            dataSource={filteredOrders}
                             columns={columns}
                             rowKey="c_order_id"
                             pagination={false}
@@ -384,8 +463,8 @@ function CustomerOrderPage() {
 
                     <Modal
                         title={`รายละเอียดคำสั่งซื้อ ${selectedOrderId}`}
-                        open={modalOpen}
-                        onCancel={() => setModalOpen(false)}
+                        open={orderDetailmodalOpen}
+                        onCancel={() => setOrderDetailModalOpen(false)}
                         footer={null}
                         width={700}
                     >
@@ -402,4 +481,4 @@ function CustomerOrderPage() {
     );
 }
 
-export default CustomerOrderPage;
+export default SalesOrderPage;

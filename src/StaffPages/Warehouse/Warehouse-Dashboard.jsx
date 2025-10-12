@@ -7,7 +7,7 @@ import {
     successNotification,
 } from "../../middleware/displayer";
 
-import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Card, Spin, Select, Modal, InputNumber, Button } from "antd";
+import { Layout, Menu, Breadcrumb, Avatar, Dropdown, theme, Space, Card, Spin, Select, Modal, InputNumber, Button, Table } from "antd";
 import {
     MenuFoldOutlined,
     MenuUnfoldOutlined,
@@ -44,6 +44,13 @@ function WarehouseDashboard() {
     const [incomeModalVisible, setIncomeModalVisible] = useState(false);
     const [toBeAddedProducts, setToBeAddedProducts] = useState([]);
     const [currentProducts, setCurrentProducts] = useState([]);
+
+    // Variables for packaging card
+    const [ordersModalVisible, setOrdersModalVisible] = useState(false);
+    const [ordersForPackaging, setOrdersForPackaging] = useState([]);
+    const [orderDetailModalVisible, setOrderDetailModalVisible] = useState(false);
+    const [selectedOrderDetails, setSelectedOrderDetails] = useState([]);
+    const [selectedOrderId, setSelectedOrderId] = useState(null);
 
     const incomeColumns = [
         { title: "ชื่อสินค้า (QC)", key: "p_name" },
@@ -144,11 +151,72 @@ function WarehouseDashboard() {
         setCurrentProducts(prodCurrent.data);
         setIncomeModalVisible(true);
         } catch {
-            errorNotification("โหลดข้อมูลไม่สำเร็จ", "โปรดลองอีกครั้ง");
+            errorNotification("โหลดข้อมูลไม่สำเร็จ", "ไม่มีสินค้าที่รอการแยกเกรด");
         } finally {
             setLoading(false);
         }        
     }
+
+    const fetchOrdersForPackaging = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get("/customerOrdersWaitForPackaging", {
+                headers: { "api-key": API_KEY },
+            });
+            setOrdersForPackaging(res.data);
+            setOrdersModalVisible(true);
+        } catch (err) {
+            console.error(err);
+            errorNotification("เกิดข้อผิดพลาด", "ไม่มีคำสั่งซื้อในระบบที่รอการจัดของ");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const fetchOrderDetailsForPackaging = async (order_id) => {
+        try {
+            setLoading(true);
+            const res = await api.post(
+                "/customerOrderDetails",
+                { order_id },
+                { headers: { "api-key": API_KEY } }
+            );
+            setSelectedOrderDetails(res.data);
+            setSelectedOrderId(order_id);
+            setOrderDetailModalVisible(true);
+        } catch (err) {
+            console.error(err);
+            errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถดึงรายละเอียดคำสั่งซื้อได้");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const confirmPackaging = async (c_order_id) => {
+        Modal.confirm({
+            title: `ยืนยันการจัดสินค้า`,
+            content: `คุณแน่ใจหรือไม่ว่าต้องการยืนยันการจัดสินค้าสำหรับคำสั่งซื้อ #${c_order_id}?`,
+            okText: "ยืนยัน",
+            cancelText: "ยกเลิก",
+            onOk: async () => {
+                try {
+                    setLoading(true);
+                    await api.post(
+                        "/confirmPackaging",
+                        { c_order_id },
+                        { headers: { "api-key": API_KEY } }
+                    );
+                    successNotification("สำเร็จ", `ยืนยันการจัดสินค้า #${c_order_id} เรียบร้อยแล้ว`);
+                    fetchOrdersForPackaging(); // รีเฟรช table
+                } catch (err) {
+                    console.error(err);
+                    errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถยืนยันการจัดสินค้าได้");
+                } finally {
+                    setLoading(false);
+                }
+            },
+        });
+    };
 
     const createSupplyLogs = async () => {
         if (!selectedSupplier || !selectedProduct || !quantity || quantity <= 0 || !Number.isInteger(quantity)) {
@@ -402,7 +470,7 @@ function WarehouseDashboard() {
                                 e.currentTarget.style.transform = "translateY(0)";
                                 e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.08)";
                             }}
-                            // onClick={openModal}
+                            onClick={fetchOrdersForPackaging}
                         >
                             <div style={{ fontSize: 50, color: "#1677ff", marginTop: 20 }}>
                                 <ShoppingOutlined />
@@ -588,6 +656,88 @@ function WarehouseDashboard() {
                                 </table>
                                 )}
                             </>
+                        )}
+                    </Modal>
+
+                    <Modal
+                        title="คำสั่งซื้อรอจัดสินค้า"
+                        open={ordersModalVisible}
+                        onCancel={() => setOrdersModalVisible(false)}
+                        width={900}
+                        footer={null}
+                    >
+                        {loading ? <Spin /> : (
+                            <Table
+                                dataSource={ordersForPackaging}
+                                rowKey="c_order_id"
+                                pagination={false}
+                                columns={[
+                                    {
+                                        title: "หมายเลขคำสั่งซื้อ",
+                                        dataIndex: "c_order_id",
+                                        render: (text) => (
+                                            <a onClick={() => fetchOrderDetailsForPackaging(text)}>
+                                                {text}
+                                            </a>
+                                        ),
+                                    },
+                                    {
+                                        title: "ลูกค้า",
+                                        dataIndex: "c_name",
+                                        key: "c_name",
+                                        render: (_, record) => `${record.c_firstname} ${record.c_lastname}`,
+                                    },
+                                    { title: "วันที่สั่งซื้อ", dataIndex: "c_order_date", key: "c_order_date" , 
+                                        render: (text) => {
+                                        if (!text) return "-";
+                                        const date = new Date(text);
+                                        return new Intl.DateTimeFormat('th-TH', { 
+                                            day: '2-digit', 
+                                            month: 'short', 
+                                            year: 'numeric', 
+                                            hour: '2-digit', 
+                                            minute: '2-digit',
+                                            hour12: false,
+                                        }).format(date);
+                                    }},
+                                    { title: "ยอดรวม (฿)", dataIndex: "total_payment" },
+                                    {
+                                        title: "ดำเนินการ",
+                                        key: "action",
+                                        render: (_, record) => (
+                                            <Button 
+                                                type="primary" 
+                                                onClick={() => confirmPackaging(record.c_order_id)}
+                                                loading={loading}
+                                            >
+                                                ยืนยันการจัดสินค้า
+                                            </Button>
+                                        ),
+                                    },
+                                ]}
+                            />
+                        )}
+                    </Modal>
+
+                    <Modal
+                        title={`รายละเอียดคำสั่งซื้อ ${selectedOrderId}`}
+                        open={orderDetailModalVisible}
+                        onCancel={() => setOrderDetailModalVisible(false)}
+                        width={1000}
+                        footer={null}
+                    >
+                        {loading ? <Spin /> : (
+                            <Table
+                                dataSource={selectedOrderDetails}
+                                rowKey="order_detail_id"
+                                pagination={false}
+                                columns={[
+                                    { title: "รหัสสินค้า", dataIndex: "p_id" },
+                                    { title: "ชื่อสินค้า", dataIndex: "p_name" },
+                                    { title: "จำนวน", dataIndex: "quantity" },
+                                    { title: "ราคารวม (฿)", dataIndex: "sub_total" },
+                                ]}
+                            />
                         )}
                     </Modal>
                 </Content>

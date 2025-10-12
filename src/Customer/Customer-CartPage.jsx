@@ -37,8 +37,11 @@ function CustomerCartPage() {
     const [userInfo, setUserInfo] = useState(null);
     const [cart, setCart] = useState([]);
 
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [orderSummaryModalOpen, setOrderSummaryModalOpen] = useState(false);
+    const [paymentModalOpen, setPaymentModalOpen] = useState(false);
     const [checkingOrder, setCheckingOrder] = useState(false);
+
+    const [transactionCode, setTransactionCode] = useState("");
 
     const {
         token: { colorBgContainer },
@@ -109,7 +112,7 @@ function CustomerCartPage() {
 
     const handleCheckout = async () => {
         setCheckingOrder(true);
-        setIsModalOpen(true);
+        setOrderSummaryModalOpen(true);
 
         try {
             const res = await api.get("/productsForSale", {
@@ -149,6 +152,11 @@ function CustomerCartPage() {
     };
 
     const confirmOrder = async () => {
+        if (!transactionCode.trim()) {
+            warningNotification("กรอกเลขที่อ้างอิง", "กรุณากรอกเลขที่อ้างอิงก่อนยืนยันคำสั่งซื้อ");
+            return;
+        }
+
         try {
             const total_payment = totalPrice;
 
@@ -158,11 +166,12 @@ function CustomerCartPage() {
                 sub_total: item.p_price * item.quantity,
             }));
 
-            const res = await api.post(
+            await api.post(
                 "/createCustomerOrder",
                 {
                     customer_id: userInfo?.c_id,
                     total_payment,
+                    transaction_code: transactionCode,
                     orderDetails,
                 },
                 {
@@ -175,12 +184,9 @@ function CustomerCartPage() {
 
             localStorage.removeItem("cart");
             setCart([]);
-            setIsModalOpen(false);
-
-            successNotification(
-                "คำสั่งซื้อสำเร็จ",
-                "โปรดดำเนินการชำระเงินภายใน 24 ชั่วโมง"
-            );
+            setPaymentModalOpen(false);
+            setTransactionCode(""); // เคลียร์ค่า
+            successNotification("คำสั่งซื้อสำเร็จ", "ระบบได้รับการชำระเงินเรียบร้อยแล้ว");
         } catch (err) {
             errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถสร้างคำสั่งซื้อได้");
         }
@@ -405,11 +411,23 @@ function CustomerCartPage() {
 
                     <Modal
                         title="สรุปรายการสั่งซื้อ"
-                        open={isModalOpen}
-                        onCancel={() => setIsModalOpen(false)}
-                        onOk={confirmOrder}
-                        okText="ยืนยันคำสั่งซื้อ"
-                        cancelText="ยกเลิก"
+                        open={orderSummaryModalOpen}
+                        onCancel={() => setOrderSummaryModalOpen(false)}
+                        footer={[
+                            <Button key="cancel" onClick={() => setOrderSummaryModalOpen(false)}>
+                                ยกเลิก
+                            </Button>,
+                            <Button
+                                key="pay"
+                                type="primary"
+                                onClick={() => {
+                                    setOrderSummaryModalOpen(false);
+                                    setPaymentModalOpen(true);
+                                }}
+                            >
+                                ชำระเงิน
+                            </Button>,
+                        ]}
                         width={700}
                     >
                         {checkingOrder ? (
@@ -447,6 +465,63 @@ function CustomerCartPage() {
                             </>
                         )}
                     </Modal>
+
+                    <Modal
+                        title="ชำระเงินผ่าน QR Code"
+                        open={paymentModalOpen}
+                        onCancel={() => setPaymentModalOpen(false)}
+                        onOk={confirmOrder}
+                        okText="ยืนยันคำสั่งซื้อ"
+                        cancelText="ยกเลิก"
+                        width={500}
+                    >
+                        <div style={{ textAlign: "center", padding: "20px 0" }}>
+                            <h3>ยอดที่ต้องชำระทั้งหมด</h3>
+                            <p style={{ fontSize: 22, fontWeight: 600, color: "#1677ff" }}>
+                                {totalPrice.toLocaleString()} ฿
+                            </p>
+
+                            {/* QR Code */}
+                            <img
+                                src="/payment_qr.png"
+                                alt="QR Code"
+                                style={{
+                                    width: 220,
+                                    height: 220,
+                                    objectFit: "contain",
+                                    marginTop: 10,
+                                    border: "1px solid #ddd",
+                                    borderRadius: 8,
+                                    padding: 8,
+                                }}
+                            />
+
+                            <p style={{ marginTop: 16, color: "#888" }}>
+                                🔍 กรุณาแสกนเพื่อชำระเงิน จากนั้นกรอกเลขที่อ้างอิงด้านล่าง
+                            </p>
+
+                            <div style={{ marginTop: 16 }}>
+                                <label style={{ display: "block", fontWeight: 500, marginBottom: 8 }}>
+                                    เลขที่อ้างอิงการชำระเงิน <span style={{ color: "red" }}>*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    placeholder="กรอกเลขที่อ้างอิง"
+                                    value={transactionCode}
+                                    onChange={(e) => setTransactionCode(e.target.value)}
+                                    style={{
+                                        width: "80%",
+                                        padding: 8,
+                                        fontSize: 16,
+                                        borderRadius: 6,
+                                        border: "1px solid #ccc",
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    </Modal>
+
+
                 </Content>
 
             </Layout>
