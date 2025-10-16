@@ -71,9 +71,9 @@ function SalesDeliveryPage() {
     };
 
     // ✅ ดึงข้อมูลคำสั่งซื้อร้านอาหาร
-    const fetchRestaurantOrders = async () => {
+    const fetchPendingRestaurant = async () => {
         try {
-            const res = await api.get("allRestaurantOrders", {
+            const res = await api.get("restaurantOrdersPendingDelivery", {
                 headers: { "api-key": API_KEY },
             });
             setRestaurantOrders(res.data);
@@ -83,9 +83,9 @@ function SalesDeliveryPage() {
     };
 
     // ✅ ดึงข้อมูลคำสั่งซื้อลูกค้า
-    const fetchCustomerOrders = async () => {
+    const fetchPendingCustomer = async () => {
         try {
-            const res = await api.get("allCustomerOrders", {
+            const res = await api.get("customerOrdersPendingDelivery", {
                 headers: { "api-key": API_KEY },
             });
             setCustomerOrders(res.data);
@@ -124,8 +124,8 @@ function SalesDeliveryPage() {
                     );
 
                     successNotification("จัดส่งสำเร็จ", `คำสั่งซื้อ #${orderId} ถูกจัดส่งแล้ว`);
-                    if (isRestaurant) fetchRestaurantOrders();
-                    else fetchCustomerOrders();
+                    if (isRestaurant) fetchPendingRestaurant();
+                    else fetchPendingCustomer();
                 } catch {
                     errorNotification("เกิดข้อผิดพลาด", "ไม่สามารถอัปเดตสถานะได้");
                 }
@@ -137,7 +137,7 @@ function SalesDeliveryPage() {
         (async () => {
             setLoading(true);
             await verifyUser();
-            await Promise.all([fetchRestaurantOrders(), fetchCustomerOrders()]);
+            await Promise.all([fetchPendingRestaurant(), fetchPendingCustomer()]);
             setLoading(false);
         })();
     }, []);
