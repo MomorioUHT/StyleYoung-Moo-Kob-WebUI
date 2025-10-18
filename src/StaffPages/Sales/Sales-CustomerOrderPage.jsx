@@ -31,6 +31,16 @@ import {
 const { Sider, Header, Content } = Layout;
 const { Option } = Select;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Sales Customer Order Page Component
+ * Manages customer orders with packaging and transaction confirmation
+ * Allows sales staff to process customer orders through workflow stages
+ * 
+ * @returns {JSX.Element} The customer order management interface
+ */
 function SalesCustomerOrderPage() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

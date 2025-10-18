@@ -8,11 +8,28 @@ import {
     successNotification
 } from "../middleware/displayer";
 
+/**
+ * Emoji item for floating animation
+ */
 interface EmojiItem {
     emoji: string;
     style: React.CSSProperties;
 }
 
+// Validation constants
+const USERNAME_MIN_LENGTH = 5;
+const USERNAME_MAX_LENGTH = 15;
+const PASSWORD_MIN_LENGTH = 7;
+const PASSWORD_MAX_LENGTH = 20;
+const PHONE_LENGTH = 10;
+
+/**
+ * Login and Registration Page Component
+ * Provides authentication interface for both customers and staff members
+ * Includes form validation and animated background
+ * 
+ * @returns {JSX.Element} The login/register page with tab navigation
+ */
 function LoginRegister() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;
@@ -20,7 +37,10 @@ function LoginRegister() {
     const [activeTab, setActiveTab] = useState("login");
     const [emojis, setEmojis] = useState<EmojiItem[]>([]);
 
-    // Verifier User
+    /**
+     * Verifies user authentication and redirects based on user role
+     * Customers go to /home, Staff members go to role-specific dashboards
+     */
     const verifyUser = async () => {
         const token = localStorage.getItem("token");
         if (!token) return;
@@ -55,13 +75,18 @@ function LoginRegister() {
         }
     };
 
-    // User Login
+    /**
+     * Handles customer login authentication
+     * Validates credentials and stores JWT token
+     * 
+     * @param {React.FormEvent} e - Form submit event
+     */
     const customerLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         const username = (e.target as any)[0].value;
         const password = (e.target as any)[1].value;
 
-        if (username.length < 5 || username.length > 15) {
+        if (username.length < USERNAME_MIN_LENGTH || username.length > USERNAME_MAX_LENGTH) {
             warningNotification("ชื่อผู้ใช้ไม่ถูกต้อง", "ชื่อผู้ใช้ต้องมีความยาว 5-15 ตัวอักษร");
             return;
         }
@@ -88,13 +113,19 @@ function LoginRegister() {
         }
     };
 
+    /**
+     * Handles staff member login authentication
+     * Validates credentials and redirects to appropriate dashboard
+     * 
+     * @param {React.FormEvent} e - Form submit event
+     */
     const staffLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         const username = (e.target as any)[0].value;
         const password = (e.target as any)[1].value;
 
-        // ตรวจสอบ username
-        if (username.length < 5 || username.length > 15) {
+        // Validate username length
+        if (username.length < USERNAME_MIN_LENGTH || username.length > USERNAME_MAX_LENGTH) {
             warningNotification("ชื่อผู้ใช้ไม่ถูกต้อง", "ชื่อผู้ใช้ต้องมีความยาว 5-15 ตัวอักษร");
             return;
         }
@@ -121,7 +152,12 @@ function LoginRegister() {
         }
     };
 
-    // Register Customer
+    /**
+     * Handles customer registration
+     * Validates form inputs and creates new customer account
+     * 
+     * @param {React.FormEvent} e - Form submit event
+     */
     const customerRegister = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -129,18 +165,18 @@ function LoginRegister() {
             firstname, lastname, phone, address, username, password, confirmPassword,
         ] = (e.target as any);
 
-        if (username.value.length < 5 || username.value.length > 15) {
+        if (username.value.length < USERNAME_MIN_LENGTH || username.value.length > USERNAME_MAX_LENGTH) {
             warningNotification("ชื่อผู้ใช้ไม่ถูกต้อง", "ชื่อผู้ใช้ต้องมีความยาว 5-15 ตัวอักษร");
             return;
         }
 
-        const phoneRegex = /^\d{10}$/;
+        const phoneRegex = new RegExp(`^\\d{${PHONE_LENGTH}}$`);
         if (!phoneRegex.test(phone.value)) {
             warningNotification("เบอร์โทรไม่ถูกต้อง", "เบอร์โทรต้องมีเลข 10 หลักเท่านั้น");
             return;
         }
 
-        if (password.length < 7 || password.length > 20) {
+        if (password.length < PASSWORD_MIN_LENGTH || password.length > PASSWORD_MAX_LENGTH) {
             warningNotification("ข้อมูลไม่ถูกต้อง", "รหัสผ่านต้องมีความยาวระหว่าง 7 ถึง 20 ตัวอักษร");
             return;
         } else if (password.value !== confirmPassword.value) {

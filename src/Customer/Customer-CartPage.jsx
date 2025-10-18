@@ -30,6 +30,20 @@ import {
 
 const { Sider, Header, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 205;
+const SIDER_COLLAPSED_WIDTH = 80;
+const LOGO_HEIGHT = 120;
+const LOGO_SIZE = 70;
+const PRODUCT_IMAGE_SIZE = 60;
+
+/**
+ * Customer Cart Page Component
+ * Allows customers to view and manage their shopping cart
+ * Includes quantity adjustment, item removal, and checkout functionality
+ * 
+ * @returns {JSX.Element} The shopping cart page with order management
+ */
 function CustomerCartPage() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;
@@ -47,11 +61,19 @@ function CustomerCartPage() {
         token: { colorBgContainer },
     } = theme.useToken();
 
+    /**
+     * Loads shopping cart data from localStorage
+     */
     const loadCart = () => {
         const storedCart = JSON.parse(localStorage.getItem("cart")) || [];
         setCart(storedCart);
     };
 
+    /**
+     * Removes an item from the shopping cart
+     * 
+     * @param {string} id - Product ID to remove
+     */
     const handleRemoveItem = (id) => {
         const newCart = cart.filter((item) => item.p_id !== id);
         setCart(newCart);
@@ -59,6 +81,12 @@ function CustomerCartPage() {
         successNotification("ลบสินค้า", "ลบสินค้าออกจากตะกร้าแล้ว");
     };
 
+    /**
+     * Updates the quantity of an item in the cart
+     * 
+     * @param {string} id - Product ID
+     * @param {number} newQuantity - New quantity value
+     */
     const handleQuantityChange = (id, newQuantity) => {
         if (newQuantity <= 0) return;
         const newCart = cart.map((item) =>
@@ -68,12 +96,18 @@ function CustomerCartPage() {
         localStorage.setItem("cart", JSON.stringify(newCart));
     };
 
+    /**
+     * Calculates total price of all items in cart
+     */
     const totalPrice = cart.reduce(
         (sum, item) => sum + item.p_price * item.quantity,
         0
     );
 
-    // user verifier
+    /**
+     * Verifies user authentication token
+     * Redirects to login if token is invalid
+     */
     const verifyUser = async () => {
         const token = localStorage.getItem("token");
         try {
@@ -91,16 +125,27 @@ function CustomerCartPage() {
         }
     };
 
+    /**
+     * Navigation menu items
+     */
     const menuItems = [
         { key: "home", icon: <HomeOutlined />, label: "หน้าหลัก" },
         { key: "cart", icon: <ShoppingCartOutlined />, label: "ตะกร้าของฉัน" },
         { key: "orders", icon: <ShoppingOutlined />, label: "คำสั่งซื้อของฉัน" },
     ];
 
+    /**
+     * User dropdown menu items
+     */
     const userMenuItems = [
         { key: "logout", icon: <LogoutOutlined />, label: "Logout" },
     ];
 
+    /**
+     * Handles menu navigation and logout actions
+     * 
+     * @param {Object} e - Menu click event
+     */
     const handleMenuClick = (e) => {
         if (e.key === "logout") {
             localStorage.removeItem("token");
@@ -110,6 +155,10 @@ function CustomerCartPage() {
         }
     };
 
+    /**
+     * Validates cart items and initiates checkout process
+     * Checks product availability, quantity, and price updates
+     */
     const handleCheckout = async () => {
         setCheckingOrder(true);
         setOrderSummaryModalOpen(true);
@@ -151,6 +200,10 @@ function CustomerCartPage() {
         }
     };
 
+    /**
+     * Creates customer order and processes payment
+     * Requires transaction code for confirmation
+     */
     const confirmOrder = async () => {
         if (!transactionCode.trim()) {
             warningNotification("กรอกเลขที่อ้างอิง", "กรุณากรอกเลขที่อ้างอิงก่อนยืนยันคำสั่งซื้อ");
@@ -266,7 +319,7 @@ function CustomerCartPage() {
                 trigger={null}
                 collapsible
                 collapsed={collapsed}
-                width={205}
+                width={SIDER_WIDTH}
                 style={{
                     height: "100vh",
                     position: "fixed",
@@ -283,7 +336,7 @@ function CustomerCartPage() {
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        height: 120,
+                        height: LOGO_HEIGHT,
                         margin: 16,
                         background: "rgba(255,255,255,0.1)",
                         borderRadius: 8,

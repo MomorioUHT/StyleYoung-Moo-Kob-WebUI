@@ -23,6 +23,16 @@ import {
 const { Header, Sider, Content } = Layout;
 const { Option } = Select;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Production Dashboard Component
+ * Allows production staff to create production logs for products with recipes
+ * Displays available products and handles production quantity input
+ * 
+ * @returns {JSX.Element} The production dashboard with product selection and logging
+ */
 function ProductionDashboard() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

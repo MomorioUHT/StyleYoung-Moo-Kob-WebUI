@@ -19,6 +19,16 @@ import {
 
 const { Header, Sider, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * QC Logs Component
+ * Displays history of quality control activities
+ * Shows grading results, quantities, and staff information
+ * 
+ * @returns {JSX.Element} The QC logs view with search and filtering
+ */
 function QCQCLogs() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

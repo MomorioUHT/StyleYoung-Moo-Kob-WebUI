@@ -26,6 +26,16 @@ import {
 
 const { Header, Sider, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Admin Restaurant Management Component
+ * Manages restaurant partner information
+ * Handles restaurant registration and contact details
+ * 
+ * @returns {JSX.Element} The restaurant management interface
+ */
 function AdminRestaurantManagement() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

@@ -27,6 +27,16 @@ import {
 
 const { Header, Sider, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Admin Supplier Management Component
+ * Manages supplier information and contacts
+ * Includes CRUD operations for supplier database
+ * 
+ * @returns {JSX.Element} The supplier management interface
+ */
 function AdminSupplierManagement() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

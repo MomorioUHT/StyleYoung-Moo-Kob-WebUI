@@ -15,14 +15,35 @@ import {
     UserOutlined,
     MenuFoldOutlined,
 } from "@ant-design/icons";
+
 const { Sider, Header, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 205;
+const SIDER_COLLAPSED_WIDTH = 80;
+const LOGO_HEIGHT = 120;
+const LOGO_SIZE = 70;
+
+// Product grid constants
+const PRODUCT_CARD_MIN_WIDTH = 200;
+const PRODUCT_IMAGE_SIZE = 100;
+
+/**
+ * Customer Home Page Component
+ * Displays available products for sale with shopping cart functionality
+ * Includes product search, filtering, and add-to-cart features
+ * 
+ * @returns {JSX.Element} The customer home page with product catalog
+ */
 function CustomerHomePage() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;
+    
+    // UI state
     const [collapsed, setCollapsed] = useState(false);
     const [userInfo, setUserInfo] = useState(null);
 
+    // Product state
     const [availableProducts, setAvailableProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchText, setSearchText] = useState("");
@@ -31,7 +52,10 @@ function CustomerHomePage() {
         token: { colorBgContainer },
     } = theme.useToken();
 
-    // Verifier User
+    /**
+     * Verifies user authentication token
+     * Redirects to login if token is invalid
+     */
     const verifyUser = async () => {
         const token = localStorage.getItem("token");
 
@@ -53,6 +77,10 @@ function CustomerHomePage() {
         }
     };
 
+    /**
+     * Fetches all available products for sale from the API
+     * Updates the products list and loading state
+     */
     const fetchAvailableProducts = async () => {
         setLoading(true);
         const token = localStorage.getItem("token");
@@ -71,17 +99,27 @@ function CustomerHomePage() {
         }
     };
 
-
+    /**
+     * Navigation menu items for customer interface
+     */
     const menuItems = [
         { key: "home", icon: <HomeOutlined />, label: "หน้าหลัก" },
         { key: "cart", icon: <ShoppingCartOutlined />, label: "ตะกร้าของฉัน" },
         { key: "orders", icon: <ShoppingOutlined />, label: "คำสั่งซื้อของฉัน"},
     ];
 
+    /**
+     * User dropdown menu items
+     */
     const userMenuItems = [
         { key: "logout", icon: <LogoutOutlined />, label: "Logout" },
     ];
 
+    /**
+     * Handles menu item clicks for navigation and logout
+     * 
+     * @param {Object} e - Menu click event with key property
+     */
     const handleMenuClick = (e) => {
         if (e.key === "logout") {
             localStorage.removeItem("token");
@@ -91,11 +129,25 @@ function CustomerHomePage() {
         }
     };
 
+    /**
+     * Initialize component data on mount
+     * Verifies user authentication and loads available products
+     */
     useEffect(() => {
         verifyUser();
         fetchAvailableProducts();
     }, []);
 
+    /**
+     * Adds a product to the shopping cart in localStorage
+     * Updates quantity if product already exists in cart
+     * 
+     * @param {Object} product - Product object to add to cart
+     * @param {string} product.p_id - Product ID
+     * @param {string} product.p_name - Product name
+     * @param {number} product.p_price - Product price
+     * @param {string} product.picture_url - Product image URL
+     */
     const handleAddToCart = (product) => {
         try {
             let cart = JSON.parse(localStorage.getItem("cart")) || [];
@@ -127,7 +179,7 @@ function CustomerHomePage() {
                 trigger={null}
                 collapsible
                 collapsed={collapsed}
-                width={205}
+                width={SIDER_WIDTH}
                 style={{
                     height: "100vh",
                     position: "fixed",
@@ -144,7 +196,7 @@ function CustomerHomePage() {
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
-                        height: 120,
+                        height: LOGO_HEIGHT,
                         margin: 16,
                         background: "rgba(255,255,255,0.1)",
                         borderRadius: 8,
@@ -160,8 +212,8 @@ function CustomerHomePage() {
                             src="/Logo.png"
                             alt="Logo2"
                             style={{
-                                width: 70,
-                                height: 70,
+                                width: LOGO_SIZE,
+                                height: LOGO_SIZE,
                                 objectFit: "contain",
                                 marginBottom: 8,
                                 transition: "opacity 0.3s",
@@ -184,7 +236,7 @@ function CustomerHomePage() {
                 />
             </Sider>
 
-            <Layout style={{ marginLeft: collapsed ? 80 : 200, transition: "all 0.2s", height: "100vh" }}>
+            <Layout style={{ marginLeft: collapsed ? SIDER_COLLAPSED_WIDTH : SIDER_WIDTH - 5, transition: "all 0.2s", height: "100vh" }}>
                 <Header
                     style={{
                         padding: 0,
@@ -244,7 +296,7 @@ function CustomerHomePage() {
                         <div
                             style={{
                                 display: "grid",
-                                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                                gridTemplateColumns: `repeat(auto-fill, minmax(${PRODUCT_CARD_MIN_WIDTH}px, 1fr))`,
                                 gap: "20px",
                                 marginTop: "20px",
                             }}
@@ -281,8 +333,8 @@ function CustomerHomePage() {
                                         src={item.picture_url}
                                         alt={item.p_name}
                                         style={{
-                                            width: 100,
-                                            height: 100,
+                                            width: PRODUCT_IMAGE_SIZE,
+                                            height: PRODUCT_IMAGE_SIZE,
                                             objectFit: "contain",
                                             marginTop: 20,
                                             borderRadius: 8,

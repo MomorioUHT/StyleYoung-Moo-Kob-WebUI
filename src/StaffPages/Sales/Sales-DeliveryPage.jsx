@@ -16,6 +16,16 @@ import {
 const { Sider, Header, Content } = Layout;
 const { Option } = Select;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Sales Delivery Page Component
+ * Manages delivery status for both customer and restaurant orders
+ * Allows marking orders as delivered and tracking delivery status
+ * 
+ * @returns {JSX.Element} The delivery management interface for all order types
+ */
 function SalesDeliveryPage() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

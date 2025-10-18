@@ -18,6 +18,16 @@ import {
 
 const { Header, Sider, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Production Logs Component
+ * Displays history of all production activities
+ * Shows product, quantity, date, and staff information
+ * 
+ * @returns {JSX.Element} The production logs view with search functionality
+ */
 function ProductionProductionLogs() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

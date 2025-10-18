@@ -18,6 +18,16 @@ import {
 
 const { Header, Sider, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Warehouse Supply Logs Component
+ * Displays history of all supply/receiving activities
+ * Shows ingredients, quantities, suppliers, and dates
+ * 
+ * @returns {JSX.Element} The supply logs view with ingredient tracking
+ */
 function WarehouseSupplylogs() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

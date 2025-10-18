@@ -24,6 +24,16 @@ import {
 const { Header, Sider, Content } = Layout;
 const { Option } = Select;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * QC Dashboard Component
+ * Quality Control interface for grading produced products
+ * Allows QC staff to assign grades (A, B, C) to products
+ * 
+ * @returns {JSX.Element} The QC dashboard with product grading functionality
+ */
 function QCDashboard() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

@@ -26,6 +26,16 @@ import {
 
 const { Header, Sider, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Admin Ingredient Management Component
+ * Manages raw material ingredients for recipes
+ * Tracks ingredient inventory and supplier associations
+ * 
+ * @returns {JSX.Element} The ingredient management interface
+ */
 function AdminIngredientManagement() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

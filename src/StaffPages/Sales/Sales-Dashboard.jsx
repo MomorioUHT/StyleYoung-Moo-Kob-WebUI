@@ -22,6 +22,16 @@ import {
 
 const { Header, Sider, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Sales Dashboard Component
+ * Allows sales staff to create orders for restaurant partners
+ * Displays available products and manages order creation workflow
+ * 
+ * @returns {JSX.Element} The sales dashboard with restaurant order creation
+ */
 function SalesDashboard() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;
