@@ -31,6 +31,16 @@ import {
 const { Sider, Header, Content } = Layout;
 const { Option } = Select;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Sales Restaurant Order Page Component
+ * Manages restaurant partner orders with packaging workflow
+ * Handles order confirmation and preparation for delivery
+ * 
+ * @returns {JSX.Element} The restaurant order management interface
+ */
 function SalesRestaurantOrderPage() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

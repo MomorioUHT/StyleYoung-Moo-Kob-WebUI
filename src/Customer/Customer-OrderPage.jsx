@@ -28,6 +28,19 @@ import {
 
 const { Sider, Header, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 205;
+const SIDER_COLLAPSED_WIDTH = 80;
+const LOGO_HEIGHT = 120;
+const LOGO_SIZE = 70;
+
+/**
+ * Customer Order Page Component
+ * Displays customer's order history with detailed view capability
+ * Shows order status, payment details, and delivery tracking
+ * 
+ * @returns {JSX.Element} The customer order history page
+ */
 function CustomerOrderPage() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;
@@ -43,6 +56,10 @@ function CustomerOrderPage() {
         token: { colorBgContainer },
     } = theme.useToken();
 
+    /**
+     * Verifies user authentication token
+     * Redirects to login if token is invalid
+     */
     const verifyUser = async () => {
         const token = localStorage.getItem("token");
         try {
@@ -63,6 +80,9 @@ function CustomerOrderPage() {
         }
     };
 
+    /**
+     * Fetches all orders for the current customer
+     */
     const fetchOrders = async () => {
         setLoading(true);
         try {
@@ -83,6 +103,11 @@ function CustomerOrderPage() {
         }
     };
 
+    /**
+     * Fetches detailed information for a specific order
+     * 
+     * @param {string} order_id - Order ID to fetch details for
+     */
     const fetchOrderDetails = async (order_id) => {
         try {
             const res = await api.post(

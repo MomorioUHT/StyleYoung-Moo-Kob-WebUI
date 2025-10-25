@@ -28,6 +28,16 @@ import {
 const { Header, Sider, Content } = Layout;
 const { Option } = Select;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Admin Product Management Component
+ * Allows administrators to manage product catalog
+ * Includes CRUD operations for products with recipe assignment
+ * 
+ * @returns {JSX.Element} The product management interface with full CRUD operations
+ */
 function AdminProductManagement() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

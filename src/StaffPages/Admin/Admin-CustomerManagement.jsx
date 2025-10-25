@@ -23,6 +23,16 @@ import {
 
 const { Header, Sider, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Admin Customer Management Component
+ * Allows administrators to view and manage customer accounts
+ * Displays customer information, login history, and account status
+ * 
+ * @returns {JSX.Element} The customer management interface with search and view capabilities
+ */
 function AdminCustomerManagement() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

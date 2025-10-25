@@ -27,6 +27,16 @@ import {
 const { Header, Sider, Content } = Layout;
 const { Option } = Select;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+
+/**
+ * Admin Recipe Management Component
+ * Manages product recipes and ingredient compositions
+ * Assigns recipes to products with ingredient quantities
+ * 
+ * @returns {JSX.Element} The recipe management interface with ingredient selection
+ */
 function AdminRecipeManagement() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;

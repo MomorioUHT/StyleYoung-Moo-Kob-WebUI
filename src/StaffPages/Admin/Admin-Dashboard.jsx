@@ -27,6 +27,17 @@ import {
 
 const { Header, Sider, Content } = Layout;
 
+// Layout constants
+const SIDER_WIDTH = 250;
+const SIDER_COLLAPSED_WIDTH = 80;
+
+/**
+ * Admin Dashboard Component
+ * Displays overview statistics, charts, and recent activities
+ * Provides navigation to all admin management sections
+ * 
+ * @returns {JSX.Element} The admin dashboard with summary cards and data visualization
+ */
 function AdminDashboard() {
     const navigate = useNavigate();
     const API_KEY = process.env.REACT_APP_API_KEY;
@@ -49,7 +60,10 @@ function AdminDashboard() {
         token: { colorBgContainer },
     } = theme.useToken();
 
-    // ตรวจสอบสิทธิ์ผู้ใช้
+    /**
+     * Verifies user authentication and authorization
+     * Checks if user has admin privileges
+     */
     const verifyUser = async () => {
         const token = localStorage.getItem("token");
 
@@ -73,12 +87,9 @@ function AdminDashboard() {
         }
     };
 
-    useEffect(() => {
-        verifyUser();
-        fetchDashboardData()
-    }, []);
-
-    // Dashboard Items
+    /**
+     * Fetches all dashboard data including summary statistics and recent records
+     */
     const fetchDashboardData = async () => {
         const token = localStorage.getItem("token");
         try {
@@ -136,6 +147,20 @@ function AdminDashboard() {
         }
     };
 
+    /**
+     * Initialize component on mount
+     * Verifies user and loads dashboard data
+     */
+    useEffect(() => {
+        verifyUser();
+        fetchDashboardData();
+    }, []);
+
+    /**
+     * Handles menu navigation and logout
+     * 
+     * @param {Object} e - Menu click event
+     */
     const handleMenuClick = (e) => {
         if (e.key === "logout") {
             localStorage.removeItem("token");
@@ -145,6 +170,9 @@ function AdminDashboard() {
         }
     };
 
+    /**
+     * Admin navigation menu items
+     */
     const menuItems = [
         { key: "dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
         { key: "staffs", icon: <TeamOutlined />, label: "จัดการข้อมูลพนักงาน" },
