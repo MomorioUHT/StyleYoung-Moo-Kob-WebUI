@@ -483,7 +483,7 @@ function CustomerCartPage() {
 
                             {/* QR Code */}
                             <img
-                                src="/payment_qr.png"
+                                src="/QRCODE.png"
                                 alt="QR Code"
                                 style={{
                                     width: 220,
