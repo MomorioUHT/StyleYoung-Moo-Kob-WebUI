@@ -97,7 +97,7 @@ function QCQCLogs() {
 
     const QCLogsColumns = [
         { title: "ID", dataIndex: "qc_id", key: "qc_id" },
-        { title: "ชื่อสินค้าก่อนที่จะที่ถูก QC", dataIndex: "p_name", key: "p_name" },
+        { title: "ชื่อสินค้าก่อนที่จะถูก QC", dataIndex: "p_name", key: "p_name" },
         { title: "สถานะการ QC", dataIndex: "qc_state", key: "qc_state",
             render: (text) => {
                 if (text === "to_be_added") {
