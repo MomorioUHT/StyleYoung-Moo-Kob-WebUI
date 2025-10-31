@@ -347,7 +347,7 @@ function AdminSupplierManagement() {
 
                     {/* Modal */}
                     <Modal
-                        title="เพิ่มร้านอาหารใหม่"
+                        title="เพิ่มผู้จำหน่ายใหม่"
                         open={isModalOpen}
                         onOk={addSupplier}
                         onCancel={closeModal}
